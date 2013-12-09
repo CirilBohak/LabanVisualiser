@@ -998,3 +998,675 @@ var lleggesture = function() {
       } /* no tap and pivot */ /* c OK */
 } /* lleggesture */
 /***************************************************/
+
+
+var ldoarms = function() {
+/*
+   do movements of the arms
+
+   called by ldolimb,
+   calls     lsetframes,
+*/
+	var absjc;
+	
+	if (jc < 0) absjc = -jc; else absjc = jc;
+	if ((absjc > 3)&&(absjc < 7))
+	{
+		if (jm == Dirn)
+		{
+			output += "*\n* arms\n";
+			if ((jd < 0) || (jd > 2))
+			{
+				console.log("ldoarms problem line "+j+" bar "+nbar+"\n");
+				console.log(""+ jm+" "+leadingZeros(ji, 3)+" "+leadingZeros(jx, 3)+" "+leadingZeros(jy, 3)+" "+leadingZeros(js, 3)+" "+leadingZeros(jw, 3)+" "+leadingZeros(jh, 3)+" "+jd+"\n");
+				lgetout(1);
+				if (ok == 1) return;
+			}
+			if (jc < 0) // left arm
+			{
+				if (jb == RELAX)
+				{
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto luarm lshldr shldrs "+leadingZeros(arlx[jd][ji][0], 3)+" "+leadingZeros(arlx[jd][ji][1], 3)+" "+leadingZeros(arlx[jd][ji][2], 3)+"\n";
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto llarm lelbow luarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(45, 3)+"\n";
+					if (dofig == MAN)
+					{  
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto lhand lwrist llarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+"\n";
+					} /* man */
+					else
+					{
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto lhand lwrist llarm "+leadingZeros(270, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(150, 3)+"\n";
+					} /* woman */
+				}
+				else
+				if (jb == BENT)
+				{
+					if (ji == 11)
+					{
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto luarm lshldr shldrs "+leadingZeros(abnt[jd][0][0], 3)+" "+leadingZeros(abnt[jd][0][1], 3)+" "+leadingZeros(abnt[jd][0][2], 3)+"\n";
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto llarm lelbow luarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(70, 3)+"\n";
+					}
+					else
+					{
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto luarm lshldr shldrs "+leadingZeros(abnt[jd][ji][0], 3)+" "+leadingZeros(abnt[jd][ji][1], 3)+" "+leadingZeros(abnt[jd][ji][2], 3)+"\n";
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto llarm lelbow luarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(90, 3)+"\n";
+					} /* ji != 11 */
+				}
+				else
+				{
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto llarm lelbow luarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+"\n";
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto luarm lshldr shldrs "+leadingZeros(stt[jd][ji][0], 3)+" "+leadingZeros(stt[jd][ji][1], 3)+" "+leadingZeros(stt[jd][ji][2], 3)+"\n";
+				}
+			}
+			else // if (jc > 0) =  right arm
+			{
+				if (jb == RELAX)
+				{
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto ruarm rshldr shldrs "+leadingZeros(arlx[jd][ji][0], 3)+" "+leadingZeros(arlx[jd][ji][1], 3)+" "+leadingZeros(arlx[jd][ji][2], 3)+"\n";
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto rlarm relbow ruarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(45, 3)+"\n";
+					if (dofig == MAN)
+					{  
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto rhand rwrist rlarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+"\n";
+					} /* man */	//TODO
+					else
+					{
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto rhand rwrist rlarm "+leadingZeros(270, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(150, 3)+"\n";
+					} /* woman */
+
+				} /* relaxed */
+				else if (jb == BENT)
+				{		   
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto ruarm rshldr shldrs "+leadingZeros(abnt[jd][ji][0], 3)+" "+leadingZeros(abnt[jd][ji][1], 3)+" "+leadingZeros(abnt[jd][ji][2], 3)+"\n";
+					if (ji == 11)
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto rlarm relbow ruarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(70, 3)+"\n";
+					else
+						output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto rlarm relbow ruarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(90, 3)+"\n";
+				} /* bent */
+				else
+				{
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto rlarm relbow ruarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+"\n";
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto ruarm rshldr shldrs "+leadingZeros(stt[jd][ji][0], 3)+" "+leadingZeros(stt[jd][ji][1], 3)+" "+leadingZeros(stt[jd][ji][2], 3)+"\n";
+					output += "quadratic "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto rhand rwrist rlarm "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+" "+leadingZeros(0, 3)+"\n";
+				} /* not bent or relaxed */
+			} /* right arm */
+		} /* Dirn symbol */
+	} /* in arm column */
+	lbn[j].a = DONE;
+} /* ldoarms */
+
+var lspotturn = function(j, piv, fstart, fend, g)
+/*
+  maintain straight non-standing foot with ground 
+  contact during turn.
+
+  called by ldopivot,
+*/
+{
+   var gc,gi;
+
+   gi = lbn[g].i;
+   gc = lbn[g].c;
+   fprintf(nudesfile,"*\n* spot turn-\n");
+   if (gc < 0)
+      output += "repeat "+leadingZeros(fstart, 3)+" "+leadingZeros(fend, 3)+" call forleft * left = b\n";
+   else
+      output += "repeat "+leadingZeros(fstart, 3)+" "+leadingZeros(fend, 3)+" call forright * right = b\n";
+   output += "repeat "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" centre afoot "+xyz[dofig]+"\n";
+   output += "linear "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" spinby fig afoot pelvis "+piv+" y\n";
+   output += "linear "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" bendto bthigh bhip pelvis "+stt[0][ji][0]+" "+stt[0][ji][1]+" "+stt[0][ji][2]+"\n";
+   output += "repeat "+leadingZeros(fstart, 3)+" "+leadingZeros(fend, 3)+" ground fig\n";
+   if ((hold == NO)||(st < 1))
+      output += "repeat "+leadingZeros( fstart, 3)+" "+leadingZeros(fend, 3)+" moveto fig afoot "+xyz[dofig]+"\n";
+   output += "linear "+leadingZeros( fstart, 3)+" "+leadingZeros(fhalf, 3)+" bendto bfoot bankle bleg fhig1 fhig2 fhig3\n";
+   output += "repeat "+leadingZeros( fhalf, 3)+" "+leadingZeros(fend, 3)+" drag bfoot bfoot bankle bleg x\n";
+   lbn[j].a = DONE;
+   lbn[t].a = DONE;
+} /* lspotturn */
+/******************************************************/
+
+
+var lgetpin = function()
+/*
+    seek a pin in a rotation sign
+	
+	called by ldolimb, ldopivot,
+	calls     loverlap,
+*/
+{
+    var k;
+	var ki;
+    var piv;
+    var ymost;
+    var xlap,ylap;
+
+    ki = -123;
+    ymost = -1;
+    for (k = yj[jy-jh]; lbn[k].y < jy2; ++k)
+    {
+         if (lbn[k].m == Pins)
+         {
+             xlap = loverlap(jx,jx2,lbn[k].x,lbn[k].x2);
+             ylap = loverlap(jy,jy2,lbn[k].y,lbn[k].y2);
+             if ((xlap > 0) && (ylap > ymost))
+             {
+                ki = lbn[k].i;
+                ymost = ylap;
+             } /* pin overlaps more than previous pins */
+         } /* got a pin */
+    } /* k loop looking for overlapping pin */
+	 piv = 0;
+    if ((ki > 0)&&(ki <= 9))
+    {
+       if (ji == 1) piv = -45*(9-ki);
+       if (ji == 2) piv = 45*(ki-1);
+       if (ki == 1) piv = 360;
+    }
+    return(piv);
+} /* lgetpin */
+/***************************************************/
+
+var ldopivo = function()
+/*
+   do turns in the support columns
+
+   called by laction,
+   calls     lsetframes, lspotturn, lhasgesture, 
+             lhastap,    lgetpin,
+*/
+{
+   var g;
+   var t;
+   var piv;
+
+   if ( (jm == Rotn)&&(nbar > 0)&&
+	 ((jc == -2)||(jc == -1)||(jc == 1)||(jc == 2)) )
+   {
+      piv = lgetpin();
+      if (fstart < 1) fstart = 1;
+      g = lhasgesture(j);
+      t = lhastap(j);
+      if ((g > 0)&&(t > 0))
+      {
+         lspotturn(j,piv,fstart,fend,g);
+         pstart = fstart;
+         pend = fend;
+      }
+      else
+      {
+         output += "*\n* pivot\n";
+         if (jc < 0)
+            output += "repeat "+leadingZeros(fstart, 3)+" "+leadingZeros(fend, 3)+" call forleft * b = left\n";
+         else
+            output += "repeat "+leadingZeros(fstart, 3)+" "+leadingZeros(fend, 3)+" call forright * b = right\n";
+         output += "repeat "+leadingZeros( fstart, 3)+" "+leadingZeros(fstart+1, 3)+" centre bfoot "+xyz[dofig]+"\n";
+		 //todo
+         fprintf(nudesfile,
+            "linear    %3d %3d spinby fig    bfoot  pelvis %d y\n",
+               fstart,fend,piv);
+         if ((hold == NO)||(st < 1))
+			 fprintf(nudesfile,
+                "repeat    %3d %3d moveto fig    bfoot  %s\n",
+                  fstart,fend,xyz[dofig]);
+         if (hold == PR)
+             hold = NO;
+         pstart = fend;
+         pend = fend+1;
+      } /* spotturn == false */
+   }
+} /* ldopivot */
+/**************************************************/
+
+
+var lseeksym = function(m, i, x1, x2, y3, y4)
+/*
+     seek a symbol of menu m, item i,
+	 overlapping box x1,x2,y1,y2.
+
+	 called by lbows, lsethold,
+	 call      loverlap,
+*/
+{
+   var lap;
+   var kstart;
+   var k,kx,kx2,ky,ky2;
+   var y1,y2;
+
+   lap = -1;
+   if (y3 < 0) y1 = 0; else y1 = y3;
+   if (y4 < 0) y2 = 0; else y2 = y4;
+   kstart = y1 - 2*STEP;
+   if (kstart < 1) kstart = 1;
+   for (k = yj[kstart]; ((lap < 0)&&(lbn[k].y < y2)); ++k)
+   {
+      kx = lbn[k].x;
+      kx2 = lbn[k].x2;
+      ky = lbn[k].y;
+      ky2 = lbn[k].y2;
+      if ((lbn[k].m == m )&&(lbn[k].i == i))
+      {
+         if ((loverlap(x1,x2,kx,kx2) > 0)
+            && (loverlap(y1,y2,ky,ky2) > 0))
+         {
+            lap = k;
+         }
+      } /* m and i true */
+   } /* k loop */
+   return(lap);
+}  /* lseeksym */
+/***************************************************/
+
+
+var lbows = function()
+/*
+      detect and flag the various contact bows.
+
+	  called by linter,
+	  calls     lseeksym,
+
+Relevant symbols:-
+     m     i
+    Misc   1  bow
+    Limb   4  lhand
+    Limb   9  rhand
+    Area   1  top/front 
+    Area   5  back/bottom
+    Volm   1  relax
+    Volm   2  bent
+    Volm   3  straight
+    Volm   4  stretch
+    Volm   7  hold
+*/
+{
+   var centre;
+   var held,front,back;
+   var mlhand,mrhand,wlhand,wrhand;
+
+   centre = (staff[0][2] + staff[1][2])/2;
+   for (j = 0; j < nlabs; ++j)
+   {
+      if ((lbn[j].m == Misc)&&(lbn[j].i == 1))
+      {
+          lassign();
+          held = lseeksym(Volm,1,jx,jx2,jy-STEP,jy2);
+	  if (held > 0)
+          {
+              mlhand = lseeksym(Limb,4,jx-STEP/2,jx+STEP/2,jy,jy2+STEP);
+              mrhand = lseeksym(Limb,9,jx-STEP/2,jx+STEP/2,jy,jy2+STEP);
+              wlhand = lseeksym(Limb,4,jx2-STEP/2,jx2+STEP/2,jy,jy2+STEP);
+              wrhand = lseeksym(Limb,9,jx2-STEP/2,jx2+STEP/2,jy,jy2+STEP);
+              front  = lseeksym(Area,1,jx-STEP/2,jx+STEP/2,jy,jy2+STEP);
+              if (front < 0)
+                 front  = lseeksym(Area,1,jx2-STEP/2,jx2+STEP/2,jy,jy2+STEP);
+              if (front < 0)
+                 front  = lseeksym(Area,2,jx-STEP/2,jx+STEP/2,jy,jy2+STEP);
+              if (front < 0)
+                 front  = lseeksym(Area,2,jx2-STEP/2,jx2+STEP/2,jy,jy2+STEP);
+              back   = lseeksym(Area,5,jx-STEP/2,jx+STEP/2,jy,jy2+STEP);
+              if (back < 0)
+                 back  = lseeksym(Area,5,jx2-STEP/2,jx2+STEP/2,jy,jy2+STEP);
+              jb = 0;
+              if (front > 0)
+              {
+                 jb = FRONT;
+                 lbn[front].a = DONE;
+              }
+              else 
+              if (back > 0)
+              {
+                 jb = BACK;
+                 lbn[back].a = DONE;
+              }
+              if (mlhand > 0) jb += MLHAND;
+              if (mrhand > 0) jb += MRHAND;
+              if (wlhand > 0) jb += WLHAND;
+              if (wrhand > 0) jb += WRHAND;
+              if (jb <= 0)
+                 fprintf(nudesfile,"* OOPS: lbows: bow %d with no contacts\n",j);
+              else
+              {
+                 if (mlhand > 0) lbn[mlhand].b = jb;
+                 if (mrhand > 0) lbn[mrhand].b = jb;
+                 if (wlhand > 0) lbn[wlhand].b = jb;
+                 if (wrhand > 0) lbn[wrhand].b = jb;
+              }
+           } /* held */
+           output += "* lbowsb "+ j+1+" "+held+" "+front+" "+back+" "+mlhand+" "+mrhand+" "+wlhand+" "+wrhand+" "+jb+"\n";
+      } /* contact bow */
+   } /* j */
+} /* lbows */
+/****************************************/
+
+
+var lstart = function()
+/*
+   seek pins denoting starting positions.
+
+   called by linter,
+*/
+{
+   var k;
+   var p;
+   var dx,dz;
+   var mx,my;
+   var wx,wy;
+
+   mx = -123;
+   my = -123;
+   wx = -123;
+   wy = -123;
+   if (nm > 0)
+      output += "\n*\ncall 0 1 doman\n";
+   else
+      output += "\n*\ncall 0 1 dowoman\n";
+   output += "call 0 1 forleft\n";
+   for (k = 0; k < npins; ++k)
+   {
+      if (pins[k][1] < 0)
+      {
+         p = pins[k][0];
+         ji = lbn[p].i;
+         if (lbn[p].d == LOW)
+         {
+            mx = lbn[p].x;
+            my = lbn[p].y;
+            if (nm > 0)
+               output += "*\nquadratic 0 1 spinby man mlfoot mpelvis "+ (ji-1)*45+" y\n";
+         }
+         else
+         {
+            wx = lbn[p].x;
+            wy = lbn[p].y;
+            if (nw > 0)
+               output += "*\nquadratic 0 1 spinby woman wrfoot wpelvis "+ (ji-1)*45+" y\n";
+         }
+         if ((wx > 0)&&(mx > 0)&&(wy > 0)&&(my > 0))
+         {
+            dx = ((wx - mx)*2)/3;
+            dz = (wy - my)/2;
+            if (nmw > 0)
+            {
+               output += "*\n";
+               output += "repeat 0 1 centre mpelvis kx ky kz\n";
+               output += "repeat      0   1 moveto woman    wpelvis kx ky kz\n";
+               output += "repeat      0   1 axes   wpelvis  cx cy cz\n";
+               output += "linear      0   1 set    dx "+dx+"\n";
+               output += "linear      0   1 set    dz "+dz+"\n";
+               output += "linear      0   1 mult   wx   dx  cx\n";
+               output += "linear      0   1 mult   wz   dz  cx\n";
+               output += "repeat      0   1 centre wpelvis  cx cy cz\n";
+               output += "repeat      0   1 centre wpelvis  cx cy cz\n";
+               output += "repeat      0   1 centre wpelvis  cx cy cz\n";
+			   output += "repeat      0   1 set    fpos     1\n";
+               output += "repeat      0   1 call   noposn\n";
+            }
+         }
+      }
+   }
+} /* lstart */
+/***********************************************/
+   
+
+var lsetrange = function()
+/*
+   set range of symbols to be interpreted
+
+   called by linter,
+*/
+{
+   var bend;
+   var k,kmax;
+   var ymax;
+
+   ystart = 0;
+   yend = lbn[0].y;
+   ymax = yend;
+   sstart = 0;
+   ssend = nlabs;
+   for (k = 0; k < nlabs; ++k)
+   {
+      if (lbn[k].m == Bars)
+      {
+         if (lbn[k].i == bstart)
+         {
+            sstart = k;
+            ystart = lbn[k].y;
+         }
+      }
+   }
+   bend = bstart + blength;
+   for (k = (sstart+1); k < nlabs; ++k)
+   {
+      if (lbn[k].m == Bars)
+      {
+         if (lbn[k].i == bend)
+            ssend = k;
+      }
+   }
+   for (k = 0; k < nlabs; ++k)
+   {
+      if (lbn[k].m == Dirn)
+      {
+         if (lbn[k].y > yend)
+            yend = lbn[k].y;
+         if ((lbn[k].y+lbn[k].h) > ymax)
+		 {
+            ymax = lbn[k].y+lbn[k].h;
+			kmax = k;
+		 }
+      }
+   }
+   fmax = 2 + int(lbn_fpp*double(ymax));
+	console.log("\n   lsetrange: pixels "+ymax+", frames "+fmax+"\n");
+} /* lsetrange */
+/****************************************************/
+
+var lcopyfigs = function()
+/*
+   finish off
+
+   called by linter,
+   calls     lgetout,
+*/
+{
+	
+   var figsname = "lintel.n";
+   
+	var done = false;
+	getFileFromServer(figsname, function(text) {
+		if (text === null) {
+			printf("\n\noops %s not in folder\n",figsname);
+			  lgetout(1);
+			  if (ok == 1) return;
+		} else {
+			//TODO REVIEW THIS CODE
+			output += text;
+			done = true;
+		}
+	});
+	while (done == false) {}
+} /* lcopyfigs */
+/********************************************/
+
+var lfinish = function()
+/*
+   finish off
+
+   called by linter,
+   calls lgetout,
+*/
+{
+   fmax += 2;
+   output += "*\n";
+   output += "**************************\n";
+   output += "*\n";
+   if (nm > 0)
+      output += "repeat      0 "+leadingZeros(fmax, 3)+" ground man\n";
+   else
+      output += "repeat      0   1 moveto man    mlfoot  10000 10000 10000\n";
+   if (nw > 0)
+      output += "repeat      0 "+leadingZeros(fmax, 3)+" ground woman\n";
+   else
+      output += "repeat      0   1 moveto woman  wlfoot  10000 10000 10000\n";
+   if (nm > 0)
+      output += "repeat      0 "+leadingZeros(fmax, 3)+" centre mpelvis fx fy fz\n";
+   else
+      output += "repeat      0 "+leadingZeros(fmax, 3)+" centre wpelvis fx fy fz\n";
+   if (track == TRUE)
+   {
+	   output += "repeat      0 "+leadingZeros(fmax, 3)+" add     fy -900 fz\n";
+       output += "repeat      0 "+leadingZeros(fmax, 3)+" place   fx  500 fy\n";
+   }
+   output += "repeat      0 "+leadingZeros(fmax, 3)+" observe -9    0  0\n*\n";
+   output += "end dance\n****************************\n";
+   output += "*\nsubroutine setfmax\n";
+   output += "*\nrepeat 0 1 set fmax "+fmax+"\n";
+   output += "*\nend setfmax\n";
+   output += "****************************\n*\nstop\n";
+   if (nbar > 0)
+         frperbar = fmax/nbar;
+   else
+         frperbar = 0;
+} /* lfinish */
+/********************************************/
+
+var lselectfig = function()
+/*
+   select figure
+
+   called by linter,
+*/
+{   
+   var k;
+   var nf;
+   var nogo;
+   var st;
+   var stv0,stv1,st4;
+   var stv = new Array();	//[2]
+   var key;
+
+	//TODO REVIEW (Was a lot of GOTOs, now a WHILE loop)
+	var again = true;
+	while(again == true){
+		again = false;
+	   for (k = 0; k < nstaff; ++k)
+		  staff[k][5] = DONE;
+	   nf = 0;
+	   nm = 0;
+	   nw = 0;
+	   nogo = FALSE;
+	   if (nstaff < 1)
+		  console.log("no staves\n");
+	   else
+	   if (nstaff == 1)
+	   {
+		  staff[0][5] = TODO;
+		  if (staff[0][4] == MAN) 
+			 ++nm;
+		  else
+			 ++nw;
+	   }
+	   else
+	   if (nstaff > 1)
+	   {
+		  nmw = 0;
+		  if (nstaff > TMAX)
+			 console.log("This can only interpret staves from 1 to "+ 		    TMAX+"\n");
+		  if (lbn_figures == 2)
+		  {
+			 stv[0] = 1; stv[1] = 2;
+			 track = TRUE;
+		  }
+		  else // (lbn_figures != 2)
+		  {
+			 console.log("\nPlease type the number of staves to be interpreted\n");
+			 if (gets(buf) == NULL)
+			 {
+				console.log("OOPS: cannot open standard input\n");
+				lgetout(1);
+				nogo = TRUE;
+				if (ok == 1){
+					break;
+				}
+			 }
+			 sscanf(buf,"%d",lbn_figures);
+			 if (lbn_figures > 2)
+			 {
+				console.log("sorry; this program can only interpret 2 staves at a time\n");
+				nogo = TRUE;
+				again = true;
+				continue;
+			 }
+			 if (lbn_figures == 1)
+				console.log("Please enter the staff number to be interpreted\n");
+			 else
+			 {
+				console.log("Please enter staff numbers to be interpreted\n");
+				console.log("separated by a space, and followed by the 'enter' key.\n\n");
+			 }
+			 if (gets(buf) == NULL)
+			 {
+				console.log("OOPS: cannot read staff numbers\n");
+				lgetout(1);
+				nogo = TRUE;
+				if (ok == 1){
+					break;
+				}
+			 }
+			 if (lbn_figures == 1)
+			 {
+				sscanf(buf,"%d",stv0); 
+				stv[0] = stv0; stv[1] = -1;
+			 }
+			 else
+			 {
+				sscanf(buf,"%d %d",stv0,stv1); 
+				stv[0] = stv0; stv[1] = stv1;
+			 }
+		  } /* lbn_figures != 2 */
+		  for (nf = 0; nf < lbn_figures; ++nf)
+		  {
+				st = stv[nf]-1;
+				if ((st < 0)||(st > nstaff))
+				{
+					console.log("OOPS: staff number "+(st+1)+" out of range\n");
+					again = true;
+					continue;
+				}
+				st4 = staff[st][4];
+				if ( ((nm > 0)&&(st4 == MAN))
+				   ||((nw > 0)&&(st4 == WOMAN)) )
+				{
+					console.log("Sorry: can only do one man and/or one woman.");
+					console.log("Please select again.\n");
+					nogo = TRUE;
+				 } /* more than 1 man or woman */
+				 else
+				 {
+					if (st4 == WOMAN) ++nw;
+					if (st4 == MAN) ++nm;
+					staff[st][5] = TODO;
+				 } /* a man or woman */  
+				 nmw = nm*nw;
+		   } /* nf */
+	   } /* nstaff > 1 */
+	   if (nogo == TRUE){
+			again = true;
+			continue;
+		}
+	}
+
+   if (lbn_figures != 2)
+   {
+       track = TRUE;
+       console.log("Track main figure? Hit 'enter' for Yes, any other key for No\n");
+       key = getchar(); 
+       if (key != '\n')
+          track = FALSE;
+   }
+   else
+       track = TRUE;
+   if (track == FALSE)
+       console.log("\n   tracking OFF\n");
+   else
+       console.log("\n   tracking ON\n");
+} /* lselectfig */
+/***********************************************/
