@@ -3288,6 +3288,1786 @@ var nexts = function()
    }
 } /* nexts */
 /***************************************/
+
+//var match = function(int nnames, int lengths[EMAX], char names[EMAX][BMAX]) (returns int)
+var match = function(names, lengths[EMAX], names)
+/*
+     find which of 'names' fits 'string'.
+
+ input
+   string - array of a1 characters to be matched.
+   nnames - number of names actually stored in array names.
+   names - list of possible strings for which to search.
+   lengths - lengths of each of the existing names
+   length - length of 'string'
+
+     output
+   which of the names that string matches, -1 if none.
+
+     called by inperf, innames, inells, injts, inlims,
+               parset, addnam,
+*/
+{
+   var j,k ;
+   var found;
+   var no;
+   var sp = null;
+
+   no = -1 ;
+   for (k = 0; k <= nnames; ++k)
+   {
+      found = TRUE;
+      if ((lengths[k] == 0) || (lengths[k] == length))
+      {
+         for (j = 0; j < length; ++j)
+         {
+            if (string[j] != names[k][j]) found = FALSE;
+         }
+         if (found == TRUE)
+         {
+            no = k ;
+            break;
+         }
+      }
+   }
+   return(no);
+} /* match */
+/***************************************/
+
+//TODO REVIEW (GOTOs replaced with continue-s + some logic moved)
+//var value = function() (returns double)
+var value = function()
+/*
+     find the value of the number which is encoded as
+     'length' characters in array 'string' and put it into 'v'.
+     set ok false if string is not a number.
+
+     called by inperf, inells, injts, parset,
+*/
+{
+	var v; //double v;
+	var nsign; //double nsign;
+	var expon;	//double expon;
+	var k; //int k;
+	var frac; //int frac;
+	var d; //int d;
+	var point = '.'; //char point = '.';
+	var minus = '-'; //char minus = '-';
+	var plus = '+'; //char plus = '+';
+
+	pok = TRUE;
+	v = doub0;
+	nsign = doub1;
+	expon = doub1;
+	frac = FALSE;
+	if ( ( length < 0 ) || ( length > BMAX ) )
+	{
+		pok = FALSE;
+		return( v );
+	}
+	for ( k = 0; k < length; ++ k )
+	{
+		//	if a decimal point encountered, start decimal place counter
+		if (string[k] == point )
+		{
+			frac = TRUE;
+			continue;
+		}
+		if ( string[k] == plus ){
+			continue;
+		}
+		if ( string[k] == minus )
+		{
+			nsign = -nsign;
+			continue;
+		}
+		for ( d = 0; d < 10; ++ d )
+		{
+			if ( string[k] == dig[d] ){
+				v = v * doub10 + double(d);
+				if ( frac == TRUE ) expon = expon / double(10);
+				continue;
+			}
+		}
+		pok = FALSE;
+		return ( v );
+	}
+	v = v * expon * nsign;
+	return( v );
+} /* value */
+/***************************************/
+
+//int addnam(int n, char names[EMAX][BMAX], int isvar, int lengths[EMAX])
+var addnam = function(n, names, isvar, lengths)
+/*
+     add a name to a list of names.
+	 return the number of names in the list.
+
+     called by inperf, inname, inells, injts, parset,
+     calls     match,
+*/
+{
+   var k; //int k;
+   var no //int no ;
+   var nnames //int nnames;
+
+   nnames = n;
+/*
+     see if name already exists-
+*/
+   no = match(nnames,lengths,names);
+   if (no >= 0)
+   {
+      console.log("addnam: string  "+string+" confusable with ");
+      for (k = 0; names[no][k] != null; ++k)
+         console.log(""+names[no][k]+"");
+      console.log("\n");
+   }
+   if (isvar == FALSE)
+/*
+     non-variables must first check variable list-
+*/
+   {
+      no = match(nvars,varlen,vname) ;
+      if (no > 0)
+      {
+         console.log("name  "+string+"  confusable with variable ");
+         for ( k = 0; vname[no][k] != null ; ++ k)
+            console.log(""+vname[no][k]+"");
+         console.log("\n");
+      }
+   }
+   else
+/*
+     variables must check all name lists-
+*/
+   {
+      no = match(nfigs,figlen,fname) ;
+      if (no > 0)
+      {
+         console.log("variable  "+             string+"  confusable with figure ");
+         for ( k = 0; fname[no][k] != null; ++ k)
+            console.log(""+fname[no][k]+"");
+         console.log("\n");
+      }
+      no = match(ne,ellen,ename) ;
+      if (no > 0)
+      {
+         console.log("variable  "+             string+"  confusable with ellipsoid ");
+         for ( k = 0; ename[no][k] != null; ++ k)
+            console.log(""+ename[no][k]+"");
+         console.log("\n");
+      }
+      no = match(njts,jntlen,jname) ;
+      if (no > 0)
+      {
+         console.log("variable  "+             string+"  confusable with joint ");
+         for ( k = 0; jname[no][k] != null; ++ k)
+            console.log(""+jname[no][k]+"");
+         console.log("\n");
+      }
+      no = match(nsubs,sublen,sname) ;
+      if (no > 0)
+      {
+         console.log("variable  "+             string+"  confusable with subroutine ");
+         for ( k = 0; sname[no][k] != null; ++ k)
+            console.log(""+sname[no][k]+"");
+         console.log("\n");
+      }
+      no = match(nfiles,fillen,tname) ;
+      if (no > 0)
+      {
+         console.log("variable  "+             string+"  confusable with file name ");
+         for ( k = 0; tname[no][k] != null; ++ k)
+            console.log(""+tname[no][k]+"");
+         console.log("\n");
+      }
+   }
+/*
+     add name to list-
+*/
+   if (nnames > EMAX)
+   {
+      console.log("\nOOPS addnam: "+          string+" makes more than max of "+EMAX+" names\n");
+      ok = 84 ;
+   }
+   else
+   {
+      for (  k = 0 ; k < length ; ++ k )
+         names[nnames][k] = string[k] ;
+      for ( k = length ; k < BMAX; ++ k )
+         names[nnames][k] = null;
+      lengths[nnames] = length;
+   }
+   ++nnames ;
+   return(nnames);
+} /* addnam */
+/***************************************/
+
+//int getint(void)
+var getint = function()
+/*
+     find value of positive integer which is encoded as 'length'
+     characters in array 'string', and put its value into 'k'.
+     set 'pok' false if string not a positive integer.
+
+     called by parset, inname,
+*/
+{
+	var j, k, m, ths;
+	var plus = '+';
+
+	if ( length <= 0 )
+	{
+		k = 0;
+		pok = FALSE;
+	}
+	else
+	{
+		pok = TRUE;
+		k = 0;
+		for( j = 0; j < length; ++j )
+		{
+			if ( string[j] != plus )
+			{
+				ths = -1;
+				for( m = 0; m < 10; ++m )
+					if ( string[j] == dig[m] ) ths = m;
+
+				if ( ths < 0 )
+				{
+					pok = FALSE;
+					return( k );
+				}
+				k = 10 * k + ths;
+			}
+		}
+	}
+	return( k );
+} /* getint */
+/***************************************/
+
+//int inells(void)
+var inells = function()
+/*
+     read in next ellipsoid and its axis lengths.
+
+     called by inperf, injts,
+     calls     nexts, match, addnam, value,
+*/
+{
+	var el, k;
+
+	nexts();
+	el = match ( ne, ellen, ename );
+	if ( el < 0 )
+	{
+		ne = addnam ( ne, ename, 0, ellen );
+		el = ne - 1;
+	}
+	for ( k = 0; k < 3; ++ k )
+	{
+		nexts ();
+		semiax[k] = value ();
+		if ( pok == FALSE )
+		{
+			console.log("\nOOPS inells: ellipsoid snag with  "+ 				string +"\n");
+			ok = 83;
+			return ( el );
+		}
+	}
+	return ( el );
+} /* inells */
+/***************************************/
+
+//void injts(void)
+var injts = function()
+/*
+     read in the next joint, the ellipsoids it connects, and the
+     position of the joint relative to each ellipsoid centre.
+
+     called by inperf,
+     calls     nexts, addnam, inells,
+*/
+{
+   var el,jt,k,e ;//int
+   var klet = 'k';//char
+   var nlet = 'n';//char
+   var elet = 'e';//char
+
+   nexts();
+   njts = addnam(njts,jname,0,jntlen);
+   jt = njts-1;
+   if ( ok > 0 ){
+	lab4();
+	return;
+   }
+/*
+     is it a knee -
+*/
+   knee[jt] = FALSE;
+   for (  k = 0 ; k < (length-1) ; ++ k )
+   {
+      if ((string[k] == klet)
+       && (string[k+1] == nlet)
+       && (string[k+2] == elet)) knee[jt] = TRUE;
+   }
+/*
+  do the two ellipsoids
+*/
+   for (  e = 0 ; e <= 1 ; ++ e )
+   {
+      el = inells();
+      if ( ok > 0 ){
+		lab5();
+		return;
+	  }
+
+      dcon[jt][e][0] = semiax[0] ;
+      dcon[jt][e][1] = semiax[1] ;
+      dcon[jt][e][2] = semiax[2] ;
+      coel[jt][e] = el ;
+   }
+   return;
+/*
+     snags-
+*/
+	function lab5(){
+		console.log("\nOOPS injts with "+string+" \n");
+	   njts = njts-1 ;
+	   return;
+   }
+
+	function lab4(){
+		console.log("\nOOPS : injts more joints than max "+EMAX +"\n");
+	   ok = 82 ;
+   }
+} /* injnts */
+/***************************************/
+
+//void inlims(void)
+var inlims = function()
+/*
+     read in limits for a joint.
+
+     called by main,
+     calls     nexts, match, value,
+
+*/
+{
+   var k,m,n;
+
+   nexts();
+   n = match(njts,jntlen,jname);
+   if (n < 0)
+   {
+      console.log("limits given for nonexistent joint: "+          string+"\n");
+      getout(1);
+      if (ok == 1) return;
+   }
+   for (k = 0; k < 3; ++k)
+   {
+      for (m = 0; m < 2; ++m)
+      {
+         nexts();
+         lim[n][k][m] = value();
+      }
+   }
+} /* inlims */
+/***************************************/
+
+//int inname(int n, int isvar, int lengths[EMAX], char names[EMAX][BMAX])
+var inname = function(n, isvar, lengths, names)
+/*
+     read in a number and then that many names.
+
+     called by inperf,
+     calls     nexts, getint, match, addnam,
+*/
+{
+   var e;	//int
+   var nitems;	//int
+   var nnames;	//int
+   var no;	//int
+
+   nnames = n;
+/*
+     get number of names in list
+*/
+   nexts();
+   nitems = getint();
+   if ( ok > 0 )
+   {
+	   console.log("inname problem- number of names not stated on\n");
+	   console.log(""+line+"\n");
+	   return(nnames);
+   }
+/*
+     get names in list
+*/
+   if (nitems <= 0){
+	   return(nnames);
+	}
+   for (  e = 0 ; e < nitems ; ++ e )
+   {
+      nexts();
+      if (length < 1){
+	   return(nnames);
+	}
+      no = match(nnames,lengths,names);
+      if (no <= 0)
+         nnames = addnam(nnames,names,isvar,lengths);
+   }
+   return(nnames);
+} /* inname */
+/***************************************/
+
+//TODO REVIEW: GOTO replaced with return and a function, which looks just as ugly as the original goto.
+//void dojoin(void)
+var dojoin = function()
+/*
+   this works out the positions of the centres of each ellipsoid
+   'cen' and the joints 'jnt', using the data 'dcon'
+
+   called by  compl,
+*/
+{
+      //int e,ecount,newc,old,newel,oldel,j,k;
+	  var e,ecount,newc,old,newel,oldel,j,k;
+	  var jfound = new Array(); //int jfound[EMAX];	//ERRORAGE
+      var efound = new Array() //int efound[EMAX];
+      var elist = new Array() //int elist[EMAX];
+/*
+     clear found and put all ellipsoids at origin -
+*/
+      for (  e = 0 ; e < ne ; ++ e )
+      {
+         cen[e][0] = 0; cen[e][1] = 0; cen[e][2] = 0;
+         jfound[e] = FALSE ;
+         efound[e] = FALSE ;
+      }
+      if (njts >= 0)
+      {
+         ecount=0 ;
+         elist[ecount]=0 ;
+         efound[ecount] = TRUE;
+/*
+     run through the ellipsoids of current figure -
+*/
+	lab2();
+	function lab2(){
+			for (  e = ecount ; e <= ecount ;  e ++ )
+			 {
+
+	/*   run through joints, adding to figure's ellipsoids - */
+
+				for (  j = 0 ; j <= njts ; ++ j )
+				{
+				   if ((jfound[j] == FALSE)
+					   && ((coel[j][0] == elist[e])
+						 ||(coel[j][1] == elist[e])))
+				   {
+
+	/*   found a joint- */
+
+					  oldel = elist[e] ;
+					  if (coel[j][1] == oldel) newc = 0 ;
+					  if (coel[j][0] == oldel) newc = 1 ;
+					  jfound[j] = TRUE ;
+					  old = 1-newc ;
+					  newel = coel[j][newc] ;
+
+	/*   check for legality- */
+
+					  for (  k = 0 ; k < ecount ; ++ k )
+					  {
+						 if (newel == elist[k])
+						 {
+							console.log("cyclic joint structure - perhaps delete doub1 of the joints \n");
+							console.log(" "+                         ecount+" "+ne+" "+njts+" "+e+" "+j+" "+newc+" "+old+" "+k+" "+oldel+" "+newel+"\n");
+							return;
+						 }
+					  }
+					  ecount = ecount+1 ;
+					  elist[ecount] = newel ;
+					  efound[newel] = TRUE;
+
+	/*   locate the new joint and ellipsoid- */
+	   
+					  for (  k = 0 ; k < 3 ; ++ k )
+					  {
+						  jnt[j][k] = cen[oldel][k]+dcon[j][old][k] ;
+						  cen[newel][k] = jnt[j][k]-dcon[j][newc][k] ;
+					  }
+					}
+				}
+			}
+
+	/* locate an ellipsoid in some other figure - */
+
+			for (newel = 0; newel < ne; ++ newel)
+			{
+				if (efound[newel] == FALSE)
+				{
+				   ++ ecount;
+				   elist[ecount] = newel;
+				   efound[newel] = TRUE;
+				   lab2();
+				}
+			}
+		}
+     }
+} /* dojoin */
+/*******************************************/
+
+//void checkin(void)
+var checkin = function()
+/*
+     check the specifications of the actions
+     to be performed.
+
+     called by  compl,
+*/
+{
+   var newa; //int newa;
+   var j; //int j;
+   var subfirst; //int subfirst;
+
+   newa = TRUE;
+   subfirst = TRUE;
+/*
+     check for snags-
+*/
+   for (  j = 0 ; j <= ne ; ++ j )
+   {
+      if (ellfig[j] < 0)
+      {
+         console.log("\nOOPS checkin: ellipsoid "+       		  j+" "+ename[j]+" defined but not in a figure\n");
+	     ok = 79 ;
+      }
+      if (ax[j][0]*ax[j][1]*ax[j][2] <= doub0)
+      {
+         console.log("\nOOPS checkin: ellipsoid "+ 		     j+" "+ename[j]+" not dimensioned\n");
+	     ok = 80 ;
+      }
+   }
+   if (fstop < fstart)
+   {
+      console.log("\nOOPS  checkin: view "+           fstart+" "+fstop +" - produces no frames\n");
+      ok = 81;
+   }
+   for (  j = 1 ; j <= nsubs ; ++ j )
+   {
+      if ((ok == 0) && (called[j] == FALSE))
+      {
+	     if (subfirst == TRUE)
+	     {
+	        subfirst = FALSE;
+	        newa = FALSE;
+	     }
+      }
+   }
+   if ((nvals+nvars) > EMAX)
+   {
+      console.log("\nOOPS  checkin "+              nvals+"  non-integer values + "+nvars+" variables\n");
+      console.log(" give more than max of "+EMAX+" \n");
+		ok = 82;
+   }
+} /* checkin */
+/***************************************/
+
+//TODO REVIEW - GOTOs replaced with return and some logic moved.
+//int valadd(double v)
+var valadd = function(v)
+/*
+     if 'v' is not in array 'val', then put it at the end.
+     wherever it is, put its index into 'j'.
+
+     called by parset,
+*/
+{
+   var j; //int j ;
+
+   for (  j = 1 ; j <= nvals ; ++ j )
+      if (val[j] == v){
+		return(j);
+	  }
+
+   nvals = nvals+1 ;
+   if (nvals > EMAX){
+		console.log("\nOOPS in valadd: no. of constants "+           nvals+" > max "+EMAX +"\n");
+		ok = 90 ;
+		return(j);
+	}
+   j = nvals ;
+   val[j] = v ;
+
+/*
+     snag-
+*/
+
+} /* valadd */
+/***************************************/
+
+//TODO REVIEW (A tonne of GOTOs that bounce processing all over the place.) Replaced with functions, which are no prettier than the gotos.
+//int parset(int contrl)
+var parset = function(contrl)
+/*
+     decode the parameters of the jth action using:
+             0  none expected
+             1  numeric value or variable name
+             2  ellipsoid name
+             3  joint name
+             4  figure name
+             5  axis name
+             6  subroutine name
+             7  variable name
+             8  anything
+             9  image file name
+
+     called by inperf,
+     calls  nexts, getint, value, valadd, match, addnam,
+*/
+{
+	int k;
+	int nax = 2;
+	int attach = 8;
+	int detach = 9;
+	double v;
+
+	k = 0;
+	if ( contrl == 0 ) return( k );
+	nexts();
+
+	//pick an integer constant-
+	if ( ( contrl != 1 ) && ( contrl != 8 ) ) return( lab1() );
+	k = getint();
+	if ( pok == TRUE ) return( k );
+
+	//pick a double constant-
+	pok =  TRUE;
+	v = value();
+	if ( pok == FALSE ) return( lab1() );
+
+	k = valadd(v);
+	if ( pok == FALSE ) return( lab1() );
+
+	k = -k;
+	return( k );
+
+	function lab1(){
+		://pick an axis-
+		if ( ( contrl != 5 ) && ( contrl != 8 ) ) return( lab2() );
+
+		k = match ( nax, axlen, axnam );
+		if ( k >= 0 ){
+			return( k );
+		}else{
+			return lab2();
+		}
+	}
+
+	function lab2(){
+		//try for a variable-
+		k = match ( nvars, varlen, vname );
+		if ( k < 0 ) return( lab3() );
+		usevar[k] = 1;
+		if ( contrl != 7 ) k = k - EMAX + 1;
+		return( k );
+	}
+
+	function lab3(){
+		//pick an ellipsoid-
+		if ( ( contrl != 2 ) && ( contrl != 8 ) ) return( lab4() );
+		k = match ( ne, ellen, ename );
+		if ( k < 0 ) return( lab4() );
+		return( k );
+	}
+
+	function lab4(){
+		//pick a joint-
+		if ( ( contrl != 3 ) && ( contrl != 8 ) ) return( lab5() );
+		k = match ( njts, jntlen, jname );
+		if ( k >= 0 ) return( k );
+		if ( ptype != attach ) return( lab5() );
+
+		njts = addnam ( njts, jname, 0, jntlen );
+		k = njts - 1;
+		return( k );
+	}
+
+	function lab5(){
+		//pick a figure-
+		if ( ( contrl != 4 ) && ( contrl != 8 ) ) return( lab7() );
+		k = match ( nfigs, figlen, fname );
+		if ( ptype == detach ) return( lab6() );
+		if ( k < 0 ) return( lab7() );
+		return( k );
+	}
+
+	function lab6(){
+		//action detach- accept any figure but "all"-
+		if ( k == 0 ) return( lab7() );
+		if ( k > 0 ) return( k );
+		nfigs = addnam ( nfigs, fname, 0, figlen );
+		k = nfigs - 1;
+		return( k );
+	}
+
+	function lab7(){
+		//pick a subroutine call-
+		if ( ( contrl != 6 ) && ( contrl != 8 ) ) return( lab8() );
+		k = match ( nsubs, sublen, sname );
+		if ( k <= 0 )
+		{
+			nsubs = addnam ( nsubs, sname, 0, sublen );
+			k = nsubs - 1;
+		}
+		called[k] = TRUE;
+		return( k );
+	}
+
+	function lab8(){
+		//pick a file name-
+		if ( ( contrl != 9 ) && ( contrl != 8 ) ) return( lab9() );
+		k = match ( nfiles, fillen, tname );
+		if ( k > 0 ) return( k );
+		nfiles = addnam ( nfiles, tname, 0, fillen );
+		k = nfiles - 1;
+		return( k );
+	}
+
+	function lab9(){
+		//snag-
+		printf ( "\nOOPS parset : contrl %d\n", contrl );
+		bell ( 1, 1 );
+		ok = 89;
+
+		//lab11:
+		return( k );
+	}
+} /* parset */
+/***************************************/
+
+//void inperf(void)
+var inperf = function()
+/*
+     this decodes the input text defining the required actions.
+
+  global  variables
+     main     -true if in main program.
+     nmax     -max number of commands possible.
+     ptype    -type of action being read.
+
+     called by compl,
+     calls     nexts, match, addnam, inname, inells, injts,
+               value, parset, nlims,
+
+	30 Jul 2006 d072 put infinite loop if error
+*/
+{
+	var nells;	//int
+	var how;	//int     // type number of current action keyname.
+	var j;	//int
+	var k;	//int
+	var linel;	//int   // length of string 'line'
+	var nmax;	//int	  // max number of commands possible
+	var s;	//int	     // counter thru subs and along a string
+	var thisub;	//int // number of current subroutine
+	var v;	//double
+
+	p = 0;
+	thisub = 0;
+	subact[0][0] = 0;
+	nmax = 4 * EMAX + PMAX;
+
+	// run through statements
+
+	for ( comand = 1; ( ( ok == 0 ) && ( comand <= nmax ) ); ++comand )
+	{
+		start = -1;
+		nexts ();
+		linel = (int)strlen ( line );
+		for ( s = 0; s < linel; ++s )
+			aline[comand][s] = line[s];
+		how = match ( NKEYS, keylen, keynam );
+		ptype = how;
+		if ( ( how <= 0 ) || ( how >= NKEYS ) )
+		{
+			console.log("\nOOPS inperf: how "+ how+" outside range 0 to "+ NKEYS +"\n");
+			bell ( 1, 1 );
+			ok = 88;
+		}
+		else if ( how == stop_keyword_code )
+		{
+			subact[thisub][1] = p - 1;
+			break;
+		}
+		else if ( how == figure_keyword_code  )
+		{
+			nexts ();
+			nfigs = addnam ( nfigs, fname, FALSE, figlen );
+			nells = ne;
+			figell[nfigs-1] = ne;
+			ne = inname ( nells, 0, ellen, ename );
+		}
+		else if ( how == ellips_keyword_code  )
+		{
+			j = inells ();
+			ax[j][0] = semiax[0];
+			ax[j][1] = semiax[1];
+			ax[j][2] = semiax[2];
+		}
+		else if ( how == joint_keyword_code )
+		{
+			injts ();
+		}
+		else if ( how  == limits_keyword_code )
+		{
+			inlims ();
+		}
+		else if ( how == variable_keyword_code )
+		{
+			nvars = inname ( nvars, 1, varlen, vname );
+			if ( ( nvars + nvals ) > EMAX )
+			{
+				console.log("\nOOPS inperf nvars "+ nvars+" + nvals "+ nvals+" > EMAX "+ EMAX +"\n");
+				bell ( 1, 1 );
+				ok = 87;
+			}
+		}
+		else if ( how == speed_keyword_code )
+		{
+			nexts ();
+			v = value ();
+			if ( v < doub0 ) slow = int ( -v + inv2 );
+			if ( v > doub0 ) fast = int ( v + inv2 );
+		}
+		else if ( how == view_keyword_code )
+		{
+			nexts ();
+			v = value ();
+			if ( pok == TRUE )
+			{
+				vstart = int ( v ) - 1;
+				if ( vstart < 0 ) vstart = 0;
+				nexts ();
+				v = value ();
+				if ( pok == TRUE ) vstop = int ( v );
+			}
+			if ( pok == FALSE )
+			{
+				console.log("\nOOPS inperf: view "+ v +"\n");
+				bell ( 1, 1 );
+				ok = 70;
+			}
+		}
+		else if ( how == subrou_keyword_code  ) // start a subroutine
+		{
+			inmain = FALSE;
+			if ( thisub == 0 ) subact[0][1] = p - 1;
+			nexts ();
+			thisub = match ( nsubs, sublen, sname );
+			if ( thisub <= 0 )
+			{
+				nsubs = addnam ( nsubs, sname, 0, sublen );
+				if ( ok == 0 ) thisub = nsubs - 1;
+			}
+			defined[thisub] = TRUE;
+			subact[thisub][0] = p;
+		}
+		else if ( how == endsub_keyword_code )  //  end of a subroutine
+		{
+			nexts ();
+			k = match ( nsubs, sublen, sname );
+			if ( k == thisub )
+			{
+				subact[k][1] = p - 1;
+			}
+			else
+			{
+				console.log("\nOOPS inperf: k "+ k+" != thisub "+ thisub +"\n");
+				bell ( 1, 1 );
+				ok = 86;
+			}
+		}
+		else if ( p >= PMAX )//  read an action -
+		{
+			p = PMAX - 1;
+			console.log("beware- more than "+ PMAX +" action specs\n");
+			console.log("actions deleted after line  "+ nline+"\n"+ line +"\n");
+		}
+		else
+		{
+			distrn[p] = how;
+			cline[p] = comand;
+
+			// read frames to which this action refers -
+
+			frstart[p] = parset(1);
+			if ( ok == TRUE ) frstop[p] = parset ( 1 );
+			if ( inmain == TRUE )
+			{
+				if ( frstart[p] < fstart )
+					fstart = frstart[p];
+				if ( frstop[p] > fstop )
+					fstop = frstop[p];
+			}
+			if ( ok == TRUE ) //call of a subroutine
+			{
+				if ( how == call_keyword_code )
+				{
+					distrn[p] = call_keyword_code;
+					ptype = call_keyword_code;
+					type[p] = call_keyword_code;
+					nexts ();
+					k = match ( nvars, varlen, vname );
+					if ( k < 0 )
+					{
+						k = match ( nsubs, sublen, sname );
+						if ( k < 0 )
+						{
+							nsubs = addnam ( nsubs, sname, 0, sublen );
+							k = nsubs - 1;
+						}
+						called[k] = TRUE;
+						pf[p][0] = k;
+					}
+					else
+					{
+						pf[p][0] = k - EMAX + 1;
+					}
+				}
+				else // read action done in these frames
+				{
+					nexts ();
+					ptype = match ( NKEYS, keylen, keynam );
+					type[p] = ptype;
+					if ( ( ptype < 1 ) || ( ptype >= NKEYS ) )
+					{
+						console.log("\nOOPS inperf: ptype "+ ptype +"\n");
+						bell ( 1, 1 );
+						ok = 85;
+					}
+					else // run through parameters of pth action
+					{
+						for ( j = 0; ( ( ok <= 0 ) && ( j < 6 ) ); ++j )
+						{
+							pf[p][j] = parset ( par[ptype][j] );
+							if ( ok > 0 )
+							{
+								console.log("\nOOPS in inperf: problem parameter "+ j+" "+ p+" "+ pf[p][j]+" "+ ptype+" "+ par[ptype][j] +"\n");
+								bell ( 1, 1 );
+							}
+						}
+					}
+				}
+			}
+		}
+		if ( ok > 0 )
+		{
+			console.log("\nOOPS in inperf: problem near line "+	nline+"\n "+ line +"\n\n");
+			bell ( 1, 1 );
+			while(true){}//dead: goto dead; WTF?! TODO REVIEW
+		}
+		if ( distrn[p] > 0 ) ++p;
+		npfs = p;
+	}
+} /* inperf */
+/***************************************/
+
+//void compl()
+var compl = function()
+/*
+   calls    inperf, getout, dojoin, checkin,
+   called by main,
+*/
+{ 
+   nline = 0;
+   inperf();
+   if (ok > 0) getout(1);
+   if (ok == 1) return;
+   dojoin();
+   if (ok > 0) getout(1);
+   if (ok == 1) return;
+   checkin();
+   if (ok > 1) getout(1);
+} /* compl */
+/***************************************/
+/*
+          actions39.h
+
+      setels      - finds ellipsoids and joints connected to given ellipsoid
+      save        - store positions and orientations
+      restore     - restore positions and orientations
+      store3      - writes data about given frame to arrays
+      getvalu     - gets a value from constants or variables
+      vecmat      - multiplies a vector by a matrix
+      doground    - moves a set of ellipsoids to rest on y = 0
+      setjnt      - finds ellipsoids and joints connected to a given joint
+      setfrc      - sets proportion of action for current frame
+      doscale     - scale a value by some proportion
+      findfg      - finds which figure includes a given ellipsoid
+      checkpr     - checks parameters for legality
+      setper      - decodes the parameters of the current action
+      sqr         - square a value
+      docolour    - sets colours of an ellipsoid
+      doplace     - sets viewing point (array 'pplace')
+      setobs      - sets 3*3 matrix for viewing rotation and place
+      enquir      - stores values of centres, joints or axis lengths
+      doattach    - joins 2 figures into 1
+      dodetach    - breaks 1 figure into 2
+      domoveby    - moves a set of ellipsoids relative to refell
+      dogroell    - scales axes of an ellipsoid
+      dogrofig    - scales a set of ellipsoids in size
+      dogrojnt    - scales set of ellipsoids keeping a joint fixed
+      domovjnt    - moves a joint
+      balanc      - balances part of a figure
+      dodrag      - keeps an ellipsoid touching ground
+      dcen        - find separation of ellipsoid centres
+      newton      - solve a polynomial
+      getmat      - generate matrix of an ellipsoid
+      getaxes     - find axis lengths of an ellipsoid
+      surf        - find separation of ellipsoid surfaces
+      sepn        - find distance between 2 ellipsoid surfaces
+      fun         - used by 'solve' for abut
+      solve       - find zero of 'fun'
+      angsepn     - find approx angular separation of ell1 and ell2 from x
+      dotouch     - bends a figure to make 2 ellipsoids touch
+      trying      - 'domoveby' then 'sepn'
+      fndmin      - find minimum of function 'trying'.
+      doabut      - slide figure to touch another
+
+
+***************************************/
+
+//TODO REVIEW: Yet another function full of GOTOs that has to be reviewed. Replaced with return-s, continue-s, a big if-statement and a function.
+//void setels(int ellpsd, int jthis)
+var setels = function(ellpsd, jthis)
+/*
+     puts into 'elist' and 'jlist' those ellipsoids and joints
+     (if any) connected to 'ellpsd'
+     (including 'ellpsd' and 'jthis')
+     except those connected through joint 'jthis'
+
+     if 'jthis' is negative, puts all joints and ellipsoids
+     connected to 'ellpsd' into lists.
+     if 'ellpsd' is zero, puts all joints and ellipsoids into lists,
+     except ellipsoid zero (world).
+
+     'ecount' is the number of ellipsoids in the list 'elist'.
+     'jcount' is the number of joints in the list 'jlist'.
+
+     called by  setper, findfg, dodetach, dogrojnt, dodrag,
+                store3, fun,
+*/
+{
+      var change;	//int
+      var ell;	//int
+      var e,ee,j,jj ;	//int
+
+
+      if (ellpsd >= ne)
+      {
+          ok = 79;
+          console.log("\nOOPS setels: ellpsd "+ 			  ellpsd+" "+ename[ellpsd]+" >= ne "+ne+"\n");
+          return;
+      }
+      if (ellpsd <= 0){
+		lab6();
+		return;
+	  }
+      ecount = 1;
+      elist[0] = ellpsd;
+      if (njts <= 0) return;
+      jcount = 0;
+      if (!(jthis < 0)){
+		  if (jthis >= njts)
+		  {
+			  ok = 78;
+			  console.log("\nOOPS setels: jthis "+ 			  jthis+"  "+jname[jthis]+" > njts "+njts+"\n");
+			  return;
+		  }
+		  if ((coel[jthis][0] != ellpsd) && (coel[jthis][1] != ellpsd))
+		  {
+			  ok = 50;
+			  console.log("\nOOPS setels: joint "+jthis+" "+name[jthis]+" connected to "+coel[jthis][0]+" "+ename[coel[jthis][0]]+" and "+coel[jthis][1]+" "+ename[coel[jthis][1]]+", not "+ellpsd+" "+ename[ellpsd]+"\n");
+			  return;
+		  }
+		  jcount = 1;
+		  jlist[0] = jthis;
+	}
+	  change == TRUE;
+	  while(change == TRUE){
+			change = FALSE;
+		  for ( e=0; e < ecount; ++e )
+		  {
+	/*   seek joint not in jlist connected to ellipsoid elist[e]- */
+
+			 for ( j=0; j < njts; ++j )
+			 {
+				if ((j == jthis) && (jthis > 0)) continue;
+				boolean b = false;
+				for (  jj=0; jj < jcount; ++jj ){
+				   if (j == jlist[jj]){
+					b = true;
+				   }
+				}
+				if(b == true){
+					continue;
+				}
+	/*   
+		j not in list yet-
+	*/
+				ell = -1;
+				if (coel[j][0] == elist[e]) ell = coel[j][1];
+				if (coel[j][1] == elist[e]) ell = coel[j][0];
+				if (ell < 0) continue;
+
+	/*   store new joint and ellipsoid- */
+
+				jlist[jcount] = j;
+				++jcount;
+				change = TRUE;
+				for (  ee=0; ee < ecount; ++ee )
+				   if (ell == elist[ee]) continue;
+				elist[ecount] = ell;
+				++ecount;
+				change = TRUE;
+			 } /* j */
+		 } /* e */
+	 }
+	 return;
+
+/*   set all ellipsoids and joints- */
+
+	lab6();
+	function lab6(){
+		jcount = 0 ;
+
+	/*   all joints with non-null connections- */
+
+		  jcount = 0;
+		  for (  j = 0 ; j <= njts ; ++ j )
+		  {
+			 if (coel[j][0] >= 0)
+			 {
+				++jcount;
+				jlist[jcount-1] = j ;
+			 }
+		  }
+
+	/*   all ellipsoids except world- */
+
+		  ecount = ne ;
+		  for (  e = 1 ; e <= ne ; ++ e )
+			 elist[e-1] = e ;
+	}
+}  /* setels */
+/*************************************************/
+
+/*****************************************************/
+/*
+         shado41.h
+
+     based on shadoq.c
+
+     to add shadows to figures
+
+     26 Apr  2005  adapt to include in drawel
+     16 Jan  2003  remove the shadows below ground
+     15 Aug  2001  move the shadows below ground
+     18 Aug  1993  to accommodate joints
+     23 Oct  1992  D.Herbison-Evans  written
+
+***************************************************
+
+   subroutines-
+        setcof
+        setaxe
+        setpro
+        setmat
+        setnup
+        ground
+        doshadow
+
+***********************************************/
+
+//void setcof(double coef[7], double el[3][3] )
+voar setcof = function(coef, el )
+/* 
+     set up coeffs of outline ellipse of an ellipsoid about 
+     its own centre in the form -  
+   
+     coef(1)*x**2 + coef[2]*z**2 + coef[3]*x*z 
+         + coef(4)*x + coef[5]*z + coef[6] = 0 
+   
+     called by setnup,
+*/
+{
+   var den ;//double
+
+   if (el[1][1] == doub0){
+		console.log("setcof "+               el[1][0]+" "+el[1][1]+" "+el[1][2]+"\n");
+		ok = 99 ;
+		return;
+   }
+   den = doub1/el[1][1] ;
+   coef[1] = el[0][0] - el[0][1]*el[0][1]*den ;
+   coef[2] = el[2][2] - el[1][2]*el[1][2]*den ;
+   coef[3] = doub2*(el[0][2] - el[0][1]*el[1][2]*den) ;
+   coef[4] = doub0 ;
+   coef[5] = doub0 ;
+   coef[6] =  -doub1 ;
+   return;
+/* 
+     snags -  
+*/
+} /* setcof */
+/************************************************/
+
+//void setaxe(int n, double axe[3], double coef[7])
+var setaxe = function(n, axe, coef)
+/* 
+     find semiminor axis, axe[0], and semimajor 
+     axis, axe[2], of ellipse described by coef. 
+   
+     called by setnup, 
+*/
+{
+   var discrt,lamx,lamz,c12,rtdis ;//double 
+
+   lamx = doub1 ;
+   lamz = doub1 ;
+   discrt = (coef[1] - coef[2])*(coef[1] - coef[2])+ coef[3]*coef[3];
+   if (discrt < doub0){
+		lab1();
+		return;
+   };
+   c12 = inv2*(coef[1]+coef[2]) ;
+   rtdis = inv2*sqrt(discrt) ;
+   lamx = c12 + rtdis ;
+   lamz = c12 - rtdis ;
+   if (lamx <= doub0){
+		lab1();
+		return;
+   };
+   if (lamz <= doub0){
+		lab1();
+		return;
+   };
+   axe[0] = doub1/sqrt(lamx) ;
+   axe[2] = doub1/sqrt(lamz) ;
+   return;
+/* 
+     snags -  
+*/
+	function lab1(){
+		console.log("setaxe snag "+          lamx+" "+lamz+" "+discrt+"\n");
+	   ok = 98 ;
+   }
+} /* setaxe */
+/******************************************/
+
+//double setpro(double coef[7])
+var setpro = function(coef)
+/*
+     for the outline of nth ellipsoid, find 'phi'
+     angle between axx axis and scene x axis.
+   
+     called by setnup, 
+*/
+{
+   var phi ;//double 
+
+   phi = pi-inv2*atan2(coef[3], coef[1]-coef[2]) ;
+   if (phi < doub0) phi = phi+twopi ;
+   return(phi);
+} /* setpro */
+/******************************************/
+
+//void setmat ( int n, double el[3][3], double el1[3][3], double unel1[3][3] )
+var setmat = function( n, e1, el1, unel1 )
+/*
+
+	finds the matrix "el" of the quadratic form of the "n"th
+	ellipsoid by taking the diagonal matrix of inverse square
+	semiaxes, and doing on it a similarity transform
+	for its own rotation.
+
+	called by setnup, cutting,
+	calls matmul, rotget,
+
+	12 Aug 2006  returning el1 and unel1
+*/
+{
+	var ii, j;//int
+	//double el0[3][3],el2[3][3],el3[3][3];
+	//double r[3][3], unr[3][3];
+	var e10 = get2DArray(3);
+	var e12 = get2DArray(3);
+	var e13 = get2DArray(3);
+	var r = get2DArray(3);
+	var unr = get2DArray(3);
+
+	// initialise diagonal matrix -
+
+	for ( ii = 0; ii < 3; ++ ii )
+	{
+		for ( j = 0; j < 3; ++ j )
+		{
+			el0[ii][j] = doub0;
+			el3[ii][j] = doub0;
+		}
+		if ( ax[n][ii] ==  doub0 )
+		{
+			console.log("setmat  ax["+ n+"]["+ ii +"] = 0\n");
+			ok = 97;
+			return;
+		}
+		el0[ii][ii] = doub1 / ax[n][ii];
+		el3[ii][ii] = ax[n][ii];
+	}
+	rotget ( r, unr, n );
+
+	// do similarity transform -
+
+	matmul ( el0, unr, el1 );
+	matmul ( r, el0, el2 );
+	matmul ( el2, el1, el);
+	matmul ( r, el3, unel1);
+} /* setmat */
+/**********************************************/
+
+//double setnup(int n, double axe[3])
+var setnup = function(n, axe)
+/* 
+     set up parameters of nth ellipsoid relative 
+     to own centre. 
+   
+     called by shadow, 
+     calls     setmat, setcof, setaxe, setpro, 
+*/
+{
+   //double el[3][3],el0[3][3],el1[3][3];
+   //double con[7];
+   var phi;//double
+   var e1 = get2DArray(3);
+   var e10 = get2DArray(3);
+   var e11 = get2DArray(3);
+   var con = new Array();
+
+   phi = doub0;
+   setmat(n,el,el0,el1) ;
+   if ( ok > 0 ){
+		lab1();
+		return(phi);
+	}
+   setcof(con,el) ;
+   if ( ok > 0 ){
+		lab1();
+		return(phi);
+	}
+   setaxe(n,axe,con) ;
+   if ( ok > 0 ){
+		lab1();
+		return(phi);
+	}
+   phi = setpro(con) ;
+   if ( ok > 0 ){
+		lab1();
+		return(phi);
+	}
+	return(phi);
+/* 
+     snag -  
+*/
+	function lab1(){
+		ok = 96;
+		console.log("setnup snag in ellipsoid "+n +"\n");
+	}
+   return(phi);
+} /* setnup */
+/******************************************/
+
+//double elground(int i)
+var elground = function(i)
+/*
+   find distance of lowest point above the ground
+   of the ellipsoid 'i'.
+
+   called by  shadow,
+   calls      rotget,
+*/
+{
+   var x,y,z;//double
+   var val;//double
+   var sumsq;//double
+   var sqt;//double
+   //double r[3][3],unr[3][3] ;
+   var r = get2DArray(3);
+   var unr = get2DArray(3);
+
+   val = cen[i][1];
+
+/*   find lowest point- */
+
+   rotget(r,unr,i) ;
+   x = unr[0][1]*ax[i][0] ;
+   y = unr[1][1]*ax[i][1] ;
+   z = unr[2][1]*ax[i][2] ;
+   sumsq = x*x+y*y+z*z;
+   if (sumsq > doub0)
+      sqt = sqrt(sumsq); else sqt = doub0;
+   val = cen[i][1] - sqt ;
+   return(val);
+}  /* elground */
+/**********************************************************/
+
+//void doshadow()
+var doshadow = function()
+/* 
+  find the shadow ellipsoids of each ellsoid in the scene
+
+     called by store3,
+     calls     setnup, rset, rotput, ground,
+*/
+{
+   var k,n;//int
+   var y, phi;//double
+   //double r[3][3];
+   var r = get2DArray(3);
+   //double axe[3];
+   var axe = Array();
+/* 
+     run thru ellipsoids to shadow each in turn -  
+*/
+    k = ne;
+    for (  n = 1 ; n < ne ; ++n )
+    {
+         phi = setnup(n,axe);
+         y = elground(n);
+         if (y > doub0)
+         {
+            cen[k][0] = cen[n][0];
+            cen[k][1] = -inv5;
+            cen[k][2] = cen[n][2];
+            ax[k][0] = axe[0];
+            ax[k][1] = inv5;
+            ax[k][2] = axe[2];
+            rset(r,phi,1);
+            rotput(r,k);
+            col[k][0] = doub1;
+            col[k][1] = doub1;
+            col[k][2] = doub1;
+			++k;
+         } /* y > 0 */
+    } /* end n loop */
+    ne = k;
+} /* doshadow */
+/******************************************/
+
+//void save(void)
+var save()
+/*
+   save positions and orientations
+
+   called by  store3, doabut, dodrag, dotouch,
+*/
+{
+   var j,n;//int
+
+   nesave = ne;
+   for (n = 0; n <= ne; ++n)
+   {
+      for ( j = 0; j < 3; ++j)
+      {
+         censav[n][j] = cen[n][j];
+         jntsav[n][j] = jnt[n][j];
+      }
+      for ( j = 0; j < 5; ++j)
+         quasav[n][j] = quat[n][j];
+   }
+} /* save */
+/***********************************************/
+
+//void restore(void)
+var restore()
+/*
+   restore positions and orientations
+
+   called by  store3, doabut, try, dodrag, fun, dotouch,
+*/
+{
+   var j,n;//int
+
+   ne = nesave;
+   for (n = 0; n <= ne; ++n)
+   {
+      for (j = 0; j < 3; ++j)
+      {
+         cen[n][j] = censav[n][j];
+         jnt[n][j] = jntsav[n][j];
+      }
+      for ( j = 0; j < 5; ++j)
+         quat[n][j] = quasav[n][j];
+   }
+} /* restore */
+/***********************************************/
+
+//void store3(int f)
+var store3 = function(f)
+/*
+    store axes, centres, orientations and colours
+    of  nels ellipsoids starting at 1 (avoiding  0 = world),
+
+    called by doframes,
+    calls     save, doshadow, setels, shift, twirl, rotput,
+	          mkang, storeang, mkquat, rotgrt, restore,
+*/
+{
+   var e,j;//int
+   //double invobs[3][3];
+   invobs = get2DArray(3);
+
+   save();
+   if (shadow == TRUE) doshadow();
+   setels(0,-1);
+   twirl(pplace[0],pplace[1],pplace[2],obs);
+   shift(-pplace[0],-pplace[1],-pplace[2]);
+   nels[f] = ne;
+   for (e = 0; e < ne; ++e)
+   {
+      for (j = 0; j < 3; ++j)
+      {
+         qu3[f][e][j+1] = quat[e][j];
+         ax3[f][e][j] = ax[e][j]*inv1000;
+         ce3[f][e][j] = cen[e][j]*inv1000;
+         co3[f][e][j] = col[e][j]*inv256;
+      } /* j*/
+      qu3[f][e][3] = -qu3[f][e][3];
+      qu3[f][e][0] = degree*atan2(quat[e][3], quat[e][4]);
+      ce3[f][e][2] = doub1 - ce3[f][e][2];
+      if (col[e][0] < 0)
+            sprintf(tn3[f][e],"%s",tname[int(inv2-col[e][0])]);
+   } /* e */
+   rotput(obs,ne);
+   mkang(ne);
+   storeang(f,ne,ang[0],ang[1],ang[2]);
+   mkquat(ne,ang[0],ang[1],ang[2]);
+   rotget(obs,invobs,ne);
+   restore();
+}  /* store3 */
+/***********************************************/
+
+//int getvalu(int p)
+var getvalu = function(p)
+/*
+  get value possibly from array val and put it into v and k.
+  if p is negative, get value of variable val(abs(p)),
+  if p is positive get p directly.
+
+  called by  doperfrm, setper,
+*/
+{
+   var k;//int
+   var ref ;//int
+
+   ref = 0 ;
+/*
+  is the parameter a variable or direct reference
+*/
+   if (p < 0)
+   {
+/*
+  parameter is index into array val-
+*/
+      ref = -p ;
+      if ((ref < 0) || (ref >= EMAX))
+      {
+         ok = 15 ;
+         console.log("val index "+ 		     ref+" outside range 0 - "+EMAX+"\n");
+      }
+      else
+      {
+         v = val[ref] ;
+         k = int(v + inv2) ;
+         if (v < doub0) k = int(v -inv2) ;
+      }
+   }
+   else
+/*
+  parameter is direct reference, use it-
+*/
+   {
+      k = p ;
+      v = k ;
+   }
+   return(k);
+}  /* getvalu */
+/**************************************/
+
+//void vecmat(double v[3], double m[3][3], double w[3])
+var vecmat = function(v, m, w)
+/*
+   multiply vector 'v' by matrix 'm',
+   putting result in 'w'.
+
+   called by  sepn, dobalanc,
+*/
+{
+      var i,j;//int
+      //double vv[3]
+	  var vv = Arrray();
+	  var x;//double
+
+      for (  i = 0 ; i < 3 ; ++ i )
+      {
+         x = doub0 ;
+         for (  j = 0 ; j < 3 ; ++ j )
+         {
+            x = x+m[i][j]*v[j];
+         }
+         vv[i] = x ;
+      }
+      for (  i = 0 ; i < 3 ; ++ i )
+      {
+         w[i] = vv[i];
+      }
+}  /* vecmat */
+/**********************************************************/
+
+//double elow(int i)
+var elow = function(i)
+/*
+   find height of lowest point of ellipsoid i
+   
+   called by doground,
+   call rotget,
+  */
+{
+   //double r[3][3],unr[3][3];
+   var r = get2DArray(3);
+   var unr = get2DArray(3);
+   var x,y,z;	//double
+   var sq,sqt;	//double
+   var toty;	//double
+
+   rotget(r,unr,i);
+   x = unr[0][1]*ax[i][0];
+   y = unr[1][1]*ax[i][1];
+   z = unr[2][1]*ax[i][2];
+   sq = x*x+y*y+z*z;
+   if (sq > doub0) 
+      sqt = sqrt(sq); 
+   else 
+      sqt = doub0;
+   toty = cen[i][1] - sqt;
+   return(toty);
+} /* elow */
+/******************************************************/
+
+//double doground(void)
+var doground = function()
+/*
+   find distance of lowest point above the ground
+   of the ellipsoids contained in 'elist'.
+
+   called by  action, dodrag, fun, doshadow,
+   calls      rotget,
+*/
+{
+   var n ;//int
+   var toty;//double
+   var val;//double
+
+   if ((ecount < 1) || (ecount > ne))
+   {
+      ok = 38 ;
+      console.log("\nOOPS doground: ecount "+                         ecount+" out of range\n");
+   }
+   else
+   {
+      val = cen[elist[0]][1];
+/*  run through affected ellipsoids finding lowest point- */
+      for (  n = 0 ; n < ecount ; ++ n )
+      {
+         toty = elow(elist[n]);
+         if (toty < val) val = toty;
+      } /* n */
+   } /* if ecount */
+   return(val);
+}  /* doground */
+/**********************************************************/
+
+//void setjnt(int ellpsd, int jthis)
+var setjnt = function(ellpsd, jthis)
+/*
+     puts into 'elist' and 'jlist' those ellipsoids and joints
+     (if any) connected to 'ellpsd'
+     (including 'ellpsd' and excluding 'jthis')
+     except those connected through joint 'jthis'
+
+     'ecount' is the number of ellipsoids in the list elist.
+     'jcount' is the number of joints in the list jlist.
+
+     called by  domovjnt,
+*/
+{
+      var done;//int
+      var e,j,i,jt ;//int
+
+      ecount = 1 ;
+      elist[0] = ellpsd ;
+      jcount = 0 ;
+      if ((coel[jthis][0] != ellpsd) && (coel[jthis][1] != ellpsd))
+      {
+          ok = 64;
+          console.log("\nOOPS setjnts: coel "+coel[jthis][0]+"  "+coel[jthis][1]+" out of range "+ellpsd+" "+jthis+"\n");
+          return;
+      }
+
+	done = FALSE;
+	while((done == FALSE))
+	{
+
+		for (  e = 0 ; e < ecount ; ++ e )
+		{
+			done = TRUE;
+
+	/*   seek joint not in jlist but connected to ellipsoid elist[e]- */
+		
+			for (  jt = 0 ; jt < njts ; ++ jt )
+			{
+				if (jt == jthis) continue;
+				if (jcount > 0)
+				{
+					for (  j = 0 ; j < jcount ; ++ j )
+					{
+						if (jt == jlist[j]) continue;
+					}
+				}
+	/*
+	   jt not in list yet-
+	*/
+				i =  -1 ;
+				if (coel[jt][0] == elist[e]) i = 1 ;
+				if (coel[jt][1] == elist[e]) i = 0 ;
+				if (i < 0) continue;
+
+	/*   store new joint and ellipsoid- */
+
+				jlist[jcount] = jt ;
+				jcount ++;
+				elist[ecount] = coel[jt][i] ;
+				ecount ++;
+				done = FALSE;
+			}
+        }
+    }
+}  /* setjnt */
+/*************************************************/
+
 //END PORT ON 2013-12-10 (Errorage)
 
 
