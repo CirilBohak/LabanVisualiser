@@ -999,7 +999,7 @@ var lleggesture = function() {
 } /* lleggesture */
 /***************************************************/
 
-
+//PORT ON 2013-12-09 (Errorage)
 var ldoarms = function() {
 /*
    do movements of the arms
@@ -1670,3 +1670,1677 @@ var lselectfig = function()
        console.log("\n   tracking ON\n");
 } /* lselectfig */
 /***********************************************/
+//END PORT ON 2013-12-09 (Errorage)
+
+//PORT ON 2013-12-10 (Errorage)
+var ldobar = function()
+/*
+   write bar number out
+
+   called by laction,
+*/
+{
+   if ((jm == Bars) && (jy < yend))
+   {
+      ++nbar;
+      output += "*\n";
+	  output += "***************************\n";
+      output += "*\n";
+      output += "*   bar "+nbar+"\n";
+      output += "*   bar "+nbar+"\n";
+   }
+} /* ldobar */
+/********************************************/
+
+var lbent = function()
+/*
+   for Volm symbol : flag next 'Dirn' symbol above
+   
+   called by laction,
+   calls lassign,
+
+   Volm   1  RELAX
+   Volm   3  BENT
+   Volm   2  STRAIGHT
+   Volm   4  STRETCH
+   Volm   7  hold
+*/
+{
+   var g;
+   var k;
+   var ki,kx,kx2,ky,ky2;
+   var jy2h;
+   var km;
+
+   for (j = 0; j < ssend; ++j)
+   {
+      if ((lbn[j].m == Volm)&&(lbn[j].i <= STRETCH)) 
+      {
+         lassign();
+         jy2h = jy2+jh;
+         g = -1;
+         for (k = j+1;	((k < nlabs)&&(g < 0)); ++k)
+         {
+            km = lbn[k].m;
+            if ((km == Dirn)&&(lbn[k].a == TODO))
+            {
+               ky = lbn[k].y;
+               if (ky > jy2h)
+                  g = 0;
+               else
+               {
+                  ky2 = lbn[k].y2;
+                  kx = lbn[k].x;
+                  kx2 = lbn[k].x2;
+                  if ((loverlap(jx,jx2,kx,kx2) > 0)
+                     &&(loverlap(jy2,jy2h,ky,ky2) > 0))
+                  {
+                      g = k;
+                      lbn[j].b = ji;
+                      ki = lbn[k].i;
+                      lbn[j].m = km;
+                      lbn[j].i = ki;
+                      lbn[j].y2 = ky2;
+                      lbn[j].h = lbn[k].y2 - jy;
+                      lbn[j].d = lbn[k].d;
+                      lbn[k].a = DONE;
+                      if (ji == BENT)
+                      {
+                         if ((ki == 11)&&(jc < 0))
+                            lbn[j].i = 8;
+                         else
+                         if ((ki == 11)&&(jc > 0))
+                            lbn[j].i = 3;
+                      } /* ji == BENT */
+                  } /* overlapping */
+               } /* ky < jy2h */
+            } /* km = Dirn */
+         } /* k */
+      } /* jm = Volm */
+   } /* j */
+} /* lbent */
+/********************************************/
+
+var lrelease = function()
+/*
+   release the hold when jm = Misc
+
+   called by laction,
+   	  Assumes one of the following holds:
+
+	  So far:
+   NO  - no hold: arm gestures apply.
+   CL  - closed hold: normal ballroom dancing position.
+   SS  - semi-shadow hold: both facing same way, bodies touching, 
+         man's L hand to lady's L hand,
+         man's R hand to front of lady's R hip,
+		 lady's R hand free.
+   OE  - open extended hold: both facing same way, bodies apart,
+         man's R hand to lady's L hand, other hands free.
+   CO  - counter open extended hold: both facing same way, bodies apart,
+         man's L hand to lady's R hand, other hands free.
+   SH  - shadow hold: both facing same way, bodies touching,
+         L hand to L hand, R hand to R hand.
+
+      later to do:
+   PR  - promenade position: facing partner, bodies touching,
+         but both prepared to travel to man's L.
+   CP  - counter promenade position: facing partner, bodies touching,
+         but both prepared to travel to man's R.
+   DB  - double hold: facing partner, bodies apart,
+         L hand to R hand, R hand to L hand.
+   OP  - open hold: facing partner, bodies apart,
+         man's L hand to lady's R hand, other hands free.
+   CR  - crossed open hold: facing partner, bodies apart,
+         man's R hand to lady's R hand, other hands free.
+
+	Relevant symbols:-
+     m     i
+    Misc   1  bow
+    Misc   2  release1
+    Misc   3  release2
+    Limb   4  lhand
+    Limb   9  rhand
+    Area   1  top/front 
+    Area   5  back/bottom
+    Volm   1  RELAX
+    Volm   3  BENT
+    Volm   2  STRAIGHT
+    Volm   4  STRETCH
+    Volm   7  hold
+
+    FRONT   100         // front symbol found
+    BACK    200         // back symbol found
+    MLHAND    1         // man's left hand symbol found
+    MRHAND    2         // man's right hand symbol found
+    WLHAND   10         // woman's left hand symbol found
+    WRHAND   20         // woman's right hand symbol found
+*/
+{
+   var fdif;
+   var fbegin,ffin;
+
+   if ((nmw > 0)&&(ji == 2)) // release
+   {
+      holdcl = 0;
+      holdoe = 0;
+      holdco = 0;
+      holdpr = 0;
+      holdsh = 0;
+      holdss = 0;
+      fbegin = pend;
+      ffin = fend;
+      if (ffin <= fbegin) ffin = fbegin + 1;
+      fdif = ffin - fbegin;
+      if ((st > 0) && (hold != NO))
+      {
+         output += "repeat    "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" set fpos "+fdif+"\n";
+         output += "call      "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" noposn\n*\n";
+      }
+      hold = NO;
+      output += "* lreleasea "+             fstart+" "+fend+" "+j+" "+jb+" "+hold+" "+prevhold+"\n";
+      keptf = ffin;
+   }
+} /* lrelease */
+/******************************************/
+
+var ldoposn = function()
+/*
+   set up a couple dance position
+
+   called by lsethold, ldohold
+*/
+{
+	  fbegin = fstart;
+	  ffin = fend;
+		output += "** ldoposn "+leadingZeros(fbegin,3)+" "+leadingZeros(ffin,3)+", "+leadingZeros(st,3)+" "+leadingZeros(hold,3)+"\n";
+		
+      if (st > 0)
+      {
+			flen = ffin - fbegin;
+			if (flen < 1) flen = 1;
+			if (hold != NO) 
+            output += "repeat    "+leadingZeros(                   fbegin, 3)+" "+leadingZeros(ffin, 3)+" set    fpos "+leadingZeros(flen, 3)+"\n";
+			if (hold == PR)
+            output += "call      "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" prposn\n*\n";
+			else
+			if (hold == CO)
+            output += "call      "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" coposn\n*\n";
+			else
+			if (hold == CL)
+            output += "call      "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" clposn\n*\n";
+			else
+			if (hold == SS)
+            output += "call      "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" ssposn\n*\n";
+			else
+			if (hold == OE)
+            output += "call      "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" oeposn\n*\n";
+			else
+			if (hold == SH)
+            output += "call      "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" shposn\n*\n";
+			keptf = ffin;
+			prevhold = hold;
+      } /* st > 0 */
+} /* ldoposn */
+/*******************************************/
+
+var ldokeep = function()
+/*
+   maintain a couple dancing position
+
+   called by dohold,
+*/
+{
+		output += "** ldokeep "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" "+leadingZeros(hold, 3)+"\n";
+         if (hold == PR)
+            output += "repeat    "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" call   prkeep\n*\n";
+         else
+         if (hold == CL)
+		     output += "repeat    "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" call   clkeep\n*\n";
+         else
+         if (hold == OE)
+            output += "repeat    "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" call   oekeep\n*\n";
+         else
+         if (hold == SS)
+            output += "repeat    "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" call   sskeep\n*\n";
+		 else
+         if (hold == CO)
+            output += "repeat    "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" call   cokeep\n*\n";
+         else
+         if (hold == SH)
+            output += "repeat    "+leadingZeros(fbegin, 3)+" "+leadingZeros(ffin, 3)+" call   shkeep\n*\n";
+         keptf = ffin;
+}   /* ldokeep */
+/******************************************/
+
+var ldohold = function()
+/*
+    set up and maintain holds
+	
+	called by laction,
+	calls ldokeep, ldoposn,
+*/
+{
+   fbegin = keptf;
+   ffin = pend;
+		output += "** ldohold "+leadingZeros(fbegin,3)+" "+leadingZeros(ffin ,3)+","+leadingZeros(hold,3)+" "+leadingZeros(prevhold,3)+"\n";
+   if (prevhold == hold) 
+   {
+	   fbegin = keptf;
+      if (fbegin < ffin) ldokeep();
+   } /* prevhold == hold */
+   else
+   {
+      ldoposn();
+   } /* prevhold != hold */
+} /* ldohold */
+/*************************************************/
+
+var lsethold = function()
+/*
+   set the hold if jm = Limb or jm = Face
+
+   called by laction,
+   calls ldoposn,
+
+      Uses the hand signs to determine the holds if any.
+   	  Assumes one of the following holds:
+
+	  So far:
+   NO - no hold: arm gestures apply.
+   CL - closed hold: normal ballroom dancing position.
+   SS - semi-shadow hold: both facing same way, bodies touching, 
+        man's L hand to lady's L hand,
+        man's R hand to front of lady's R hip,
+         ady's R hand free.
+   OE - open extended hold: both facing same way, bodies apart,
+        man's R hand to lady's L hand, other hands free.
+   CO - counter open extended hold: both facing same way, bodies apart,
+        man's L hand to lady's R hand, other hands free.
+   SH - shadow hold: both facing same way, bodies touching,
+        L hand to L hand, R hand to R hand.
+   PR - promenade position: diagonally facing partner,
+        bodies touching, both travelling to man's L.
+   CP - counter promenade position: facing partner, bodies touching,
+        but both prepared to travel to man's R.
+   DB - double hold: facing partner, bodies apart,
+        L hand to R hand, R hand to L hand.
+   OP - open hold: facing partner, bodies apart,
+        man's L hand to lady's R hand, other hands free.
+   CR - crossed open hold: facing partner, bodies apart,
+        man's R hand to lady's R hand, other hands free.
+
+#define NO        0        // no hold
+#define CL        1        // closed hold
+#define PR        2        // promenade position
+#define CP        3        // counter promenade position
+#define DB        4        // double hold
+#define OP        5        // open hold
+#define CR        6        // crossed open hold
+#define OE        7        // open extended hold
+#define CO        8        // counter open extended hold
+#define SH        9        // shadow hold
+#define SS       10        // semi-shadow hold 
+
+	Relevant symbols:-
+     m     i
+    Misc   1  bow
+    Misc   2  release1
+    Misc   3  release2
+    Limb   4  lhand
+    Limb   9  rhand
+    Area   1  top/front 
+    Area   5  back/bottom
+    Volm   1  RELAX
+    Volm   3  BENT
+    Volm   2  STRAIGHT
+    Volm   4  STRETCH
+    Volm   7  hold
+
+#define FRONT   100         // front/top symbol found
+#define BACK    200         // back symbol found
+#define MLHAND    1         // man's left hand symbol found
+#define MRHAND    2         // man's right hand symbol found
+#define WLHAND   10         // woman's left hand symbol found
+#define WRHAND   20         // woman's right hand symbol found
+*/
+{
+   var i,n;
+   var dy,ylap;
+
+   prevhold = hold;
+   mface = -1;
+   wface = -1;
+   facedif = -1;
+	if ((jm == Face)&&(oriented == FALSE)&&
+		(((dofig == MAN)&&(jc < 0))||(dofig == WOMAN)&&(jc > 0)))
+	{
+		output += "linear    "+leadingZeros(0,3)+" "+leadingZeros(1,3)+" spinby fig    afoot  pelvis "+leadingZeros(((ji-1)*45),3)+" y\n";
+		oriented = TRUE;
+	}
+   if ((jm == Limb)&&((ji == 4)||(ji == 9)))
+   {
+      if (jb ==  11) { ++holdss; ++holdsh; }
+      if (jb ==  12) ++holdoe;
+      if (jb ==  21) { ++holdco; ++holdcl; ++holdpr; }
+      if (jb ==  22) ++holdsh;
+      if (jb == 110) { ++holdcl; ++holdpr; }
+      if (jb == 102) ++holdss;
+      if (jb == 120) ++holdss;
+      if (jb == 202) { ++holdcl; ++holdpr; }
+   } /* jm = a hand */
+   else
+   if ((jm == Face)&&(jx > stmiddle))
+   {
+      n = -1;
+      ylap = -1;
+      wface = ji;
+      for (i = 1; i < 9; ++i)
+      {
+         n = lseeksym(Face,i,xmin,stmiddle,jy,jy2);
+         if (n >= 0)
+         {
+            dy = loverlap(jy,jy2,lbn[n].y,lbn[n].y2);
+            if (dy > ylap)
+            {
+               ylap = dy;
+               mface = i;
+            }
+         } /* found man facing sign */
+      }
+      if (mface >= 0)
+      {
+         facedif = mface - wface;
+         if (facedif < 0) facedif += 8;
+         if (facedif > 7) facedif -= 8;
+      }
+      else
+         facedif = -1;
+      if (facedif == 0)
+      {
+         facecl = 0;
+         facepr = 0;
+         facesh = 1;
+         facess = 1;
+      } /* facing same way */
+      else
+      if (facedif == 2)
+      {
+         facecl = 0;
+         facepr = 1;
+         facesh = 0;
+         facess = 0;
+      } /* facing at right angles */
+      else
+      if (facedif == 4)
+      {
+         facecl = 1;
+         facepr = 0;
+         facesh = 0;
+         facess = 0;
+      } /* facing opposite ways */
+   } /* jm == Face */
+   if (holdoe > 1) if (hold != CO) hold = OE;
+   if (holdco > 1) if (hold != OE) hold = CO;
+   if ((facesh+holdsh) > 4) hold = SH;
+   if ((facess+holdss) > 4) hold = SS;
+   if ((facepr+holdpr) > 4) hold = PR;
+   if ((facecl+holdcl) > 4) hold = CL;
+	output += "** lsethold "+hold+" "+prevhold+",  "+facesh+" "+holdsh+",  "+facess+" "+holdss+",  "+facepr+" "+holdpr+",  "+facec1+" "+holdc1+", "+leadingZeros(mface,3)+" "+leadingZeros(wface,3)+" "+leadingZeros(facedif,3)+"\n";
+   if (prevhold != hold) ldoposn();
+} /* lsethold */
+/********************************************/
+
+var ldochest = function(piv)
+/*
+   rotate the chest and stomach
+   
+   called by ldolimb,
+*/
+{
+   if (piv == 0)
+   {
+	   output += "quadratic "+leadingZeros(              fstart, 3)+" "+leadingZeros(fend, 3)+" bendto chest   ribs  stomach 0 0 0\n";
+	   output += "quadratic "+leadingZeros(              fstart, 3)+" "+leadingZeros(fend, 3)+" bendto stomach waist pelvis 0 0 0\n";
+   } /* piv == 0 */
+   else
+   {
+      if (dofig == MAN)
+         output += "quadratic "+leadingZeros(              fstart, 3)+" "+leadingZeros(fend, 3)+" rotate chest   ribs "+leadingZeros(-piv/2, 3)+"\n";
+      else
+	      output += "quadratic "+leadingZeros(              fstart, 3)+" "+leadingZeros(fend, 3)+" rotate chest   ribs "+leadingZeros(piv/2, 3)+"\n";
+      output += "quadratic "+leadingZeros(           fstart, 3)+" "+leadingZeros(fend, 3)+" rotate stomach waist "+leadingZeros(piv/2, 3)+"\n";
+   } /* piv != 0 */
+} /* ldochest */
+/******************************************/
+
+var ldolimb = function()
+/*
+   do something to some body part
+   
+   called by laction,
+   calls ldoarms, ldochest,
+
+	Volm 7 + Area 9 = chest
+*/
+{
+	var nc;
+	var piv;
+
+	nc = jc+8;
+	piv = -1;
+	if ( (colm[nc] == ARM)&&(jm == Dirn)&&
+		((hold == NO)||(hold == OE)||(hold == CO)) )
+        ldoarms();
+	else
+	if (jm == Limb)
+		colm[nc] = Limb;
+	else
+	if ((jm == Volm)&&(ji == 7)
+		&&(colm[nc] == Area)&&(jd == BLANK))
+	{
+		colm[nc] = CHEST;
+	   output += "* ldolimba CHEST at column "+nc+"\n";
+	}
+	else
+	if ((jm == Area)&&(ji == 9)
+		&&(colm[nc] == Volm)&&(jd == BLANK))
+		colm[nc] = CHEST;
+	else
+	if ((jm == Area)&&(ji == 9))
+		colm[nc] = Area;
+	else
+	if ((jm == Volm)&&(ji == 7))
+		colm[nc] = Volm;
+	else
+	if ((jm == Rotn)&&(colm[nc] == CHEST))
+	{
+		piv = lgetpin();
+		ldochest(piv);
+	}
+} /* ldolimb */
+/*********************************************/
+
+//var lcoords = function(char jm, int ji)
+var lcoords = function(jm, ji)
+/*
+	check for change of coordinates
+
+	called by laction,
+	calls lseeksym, lgetpin
+
+	Relevant symbols:-
+	m      i
+	Volm   5  space hold
+	Volm   6  coordinates
+	Volm   7  body hold
+	Area   9  square
+	Pins   1  forward
+	Pins   5  backward
+	
+	 1 Aug 2006 checking piv against maxint
+	30 Jul 2006 writing bendtos for mspace and wspace
+*/
+{
+	var k;
+	var piv;
+
+	if ((jm == Area)&&(ji == 9))
+	{
+		piv = lgetpin ( );
+		//fprintf(nudesfile,"* lcoordsa %c %d\n",m,piv);
+		if (piv != maxint)
+		{
+			if (piv == 360) piv = 0;
+			//coordinates = SPACE;
+			if ( dofig == MAN )
+			{
+				output += "repeat "+ 					fstart+" "+ fend+" bendto mspace jman joist 270 0 "+ piv+"\n";
+			   mspace = true;
+			}
+			else
+			{
+				output += "repeat "+ 					fstart+" "+ fend+" bendto wspace jwoman joist 270 0 "+ piv+"\n";
+				wspace = TRUE;
+			}
+		} /* space stance found */
+	} /* possible space stance found */
+	else
+	{
+		k = lseeksym(Volm,7,jx,jx2,jy,jy2);
+		if (k > 0)
+		{
+			//coordinates = BODY;
+			if ( dofig == MAN )
+			   mspace = false;
+			else
+				wspace = FALSE;
+		} /* body stance found */
+		//fprintf(nudesfile,"* lcoordsb mspace wspace TRUE\n",
+			//mspace,wspace,TRUE);
+	} /* possible body stance found */
+}  /* lcoords */
+/*****************************************/
+
+var ldotoetaps = function()
+/*
+
+	do toe taps with gestures of the legs
+	doing diagonals sideways at present
+
+	Volm   1  RELAX
+	Volm   3  BENT
+	Volm   2  STRAIGHT
+	Volm   4  STRETCH
+	Volm   7  hold
+
+	called by laction,
+	calls lgetout, lsetframes, bell,
+
+	19 Aug 2006 d076- Don Herbison-Evans
+*/
+{
+	if ( (( jc == -3 )||( jc == 3 )) && ( jd == -1 ) )
+	{
+			output += "*\n";
+			if  ( ji==11 )
+				output += "* in place tap\n";
+			else if ( ( ji == 1 ) || ( ji == 10 ) )
+				output += "* forward tap\n";
+			else if ( ( ji == 2 ) || ( ji == 9 ) )
+				output += "* forward diagonal tap\n";
+			else if ( ( ji == 3 ) || ( ji == 8 ) )
+				output += "* sideways tap\n";
+			else if ( ( ji == 4 ) || ( ji == 7 ) )
+				output += "* back diagonal tap\n";
+			else if ( ( ji == 5 ) || ( ji == 6 ) )
+				output += "* backward tap\n";
+			//
+			if ( dofig == MAN )
+			{
+				if (mspace == false)
+					output += "repeat    "+leadingZeros(fstart,3)+" "+leadingZeros(fend,3)+" set    coords mpelvis\n";
+				else
+					output += "repeat    "+leadingZeros(fstart,3)+" "+leadingZeros(fend,3)+" set    coords mspace\n";
+			}
+			else
+			{
+				if (wspace == FALSE)
+					output += "repeat    "+leadingZeros(fstart,3)+" "+leadingZeros(fend,3)+" set    coords wpelvis\n";
+				else
+					output += "repeat    "+leadingZeros(fstart,3)+" "+leadingZeros(fend,3)+" set    coords wspace\n";
+			}
+			//
+			if ( jc < 0 )
+			{
+				if ( ( ji <= 1 ) || ( ji == 3 ) || ( ji == 5 ) || ( ji > 11 ) )
+				{
+					console.log("OOPS: ldotoetap left direction problem line "+ j +"\n");
+					console.log(""+leadingZeros( jm, 3)+" "+leadingZeros( ji, 3)+" "+leadingZeros( jx, 3)+" "+leadingZeros( jy, 3)+" "+leadingZeros( js, 3)+" "+leadingZeros( jw, 3)+" "+leadingZeros( jh, 3)+" "+leadingZeros( jb, 3)+" "+ jd +"\n");
+					lgetout ( 1 );
+					if ( ok == 1 ) return;
+				} /* i wrong */
+				output += "repeat    "+leadingZeros(fstart,3)+" "+leadingZeros(fend,3)+" call   forleft * left = b\n";
+			} /* left side */
+			else if ( jc > 0 )
+			{
+				if ( ( ji < 1 ) || ( ji == 6 ) || 
+					( ji == 8 ) || ( ji == 10 ) || ( ji > 11 ) )
+				{
+					console.log("OOPS: ldotoetap right direction problem line "+ j +"\n");
+					console.log(""+leadingZeros( jm, 3)+" "+leadingZeros( ji, 3)+" "+leadingZeros( jx, 3)+" "+leadingZeros( jy, 3)+" "+leadingZeros( js, 3)+" "+leadingZeros( jw, 3)+" "+leadingZeros( jh, 3)+" "+leadingZeros( jb, 3)+" "+ jd +"\n");
+					lgetout ( 1 );
+					if ( ok == 1 ) return;
+				} /* i wrong */
+				output += "repeat    "+leadingZeros(fstart,3)+" "+leadingZeros(fend,3)+" call   forright * right = b\n";
+			} /* right side */
+//
+			if ( ji == 11 )
+			{
+			
+				output += "repeat    "+leadingZeros( 					fstart, 3)+" "+leadingZeros( fend, 3)+" call   "+ risesub[rise] +"\n";
+				output += "repeat    "+leadingZeros( 					fstart, 3)+" "+leadingZeros( fend, 3)+" set    fend  "+ frange +"\n";
+				output += "linear    "+leadingZeros( 					fstart, 3)+" "+leadingZeros( fend , 3)+" bendto bleg   bknee  bthigh lrlx1 lrlx2 lrlx3\n";
+			} /* close without weight */
+			else
+				output += "linear    "+leadingZeros( 					fstart, 3)+" "+leadingZeros( fend , 3)+" bendto bleg   bknee  bthigh lhig1 lhig2 lhig3\n";
+			output += "linear    "+leadingZeros( 				fstart, 3)+" "+leadingZeros( fend , 3)+" drag   bfoot  bfoot  bankle bleg  x\n";
+			lbn[j].a = DONE;
+	} /* c OK */
+} /* ldotoetaps */
+/**************************************/
+
+var laction = function()
+/*
+   run through and interpret the actions
+
+   called by linter,
+   calls     ldobar,   ldosteps, lleggesture, ldolimb,
+             ldopivot, lbent,    lassign,  lsetframes,
+             lsethold, ldohold,  lrelease, lface,
+
+#define FRONT   100         // front symbol found
+#define BACK    200         // back symbol found
+#define MLHAND    1         // man's left hand symbol found
+#define MRHAND    2         // man's right hand symbol found
+#define WLHAND   10         // woman's left hand symbol found
+#define WRHAND   20         // woman's right hand symbol found 
+	
+#define NO        0        // no hold
+#define CL        1        // closed hold
+#define PR        2        // promenade position
+#define CP        3        // counter promenade position
+#define DB        4        // double hold
+#define OP        5        // open hold
+#define CR        6        // crossed open hold
+#define OE        7        // open extended hold
+#define CO        8        // counter open extended hold
+#define SH        9        // shadow hold
+#define SS       10        // semi-shadow hold 
+
+Relevant symbols:-
+     m     i
+    Misc   1  bow
+    Misc   2  release1
+    Misc   3  release2
+    Limb   4  lhand
+    Limb   9  rhand
+    Area   1  top/front 
+    Area   5  back/bottom
+	 Area   9  square
+    Volm   1  RELAX
+    Volm   3  BENT
+    Volm   2  STRAIGHT
+    Volm   4  STRETCH
+	 Volm   6  coordinates
+    Volm   7  hold
+    Face   n  facing direction
+
+*/
+{
+	output += "*\n************************************\n";
+	oriented = FALSE;
+	if ( dofig == MAN )
+		output += "*\nrepeat      0 "+leadingZeros( fmax , 3)+" call   doman\n";
+	else
+		output += "*\nrepeat      0 "+leadingZeros( fmax , 3)+" call   dowoman\n";
+	for ( j = 0; j < NCOLM; ++j )
+		colm[j] = ARM;
+	for ( j = 0; j < ssend; ++j )
+	{
+		lassign ();
+		lsetframes ();
+		output += "* "+lbn[j].a+" "+leadingZeros(jc, 3)+" "+lbnline[j]+"";
+		if ( lbn[j].a == TODO )
+		{
+			if ( jm == Bars )
+				ldobar ();
+			else if ( ( jm == Face ) || ( jm == Limb ) )
+				lsethold ();
+			else if ( jm == Misc )
+			{
+				lrelease ();
+			}
+			else if ( ( jc > -8 ) && ( jc < 8 ) )
+			{
+				if ( (( jm == Volm )&&( ji == 6 )) 
+					||(( jm == Area )&&( ji == 9 )) )
+						lcoords(jm, ji);
+				if ( ( jm == Rotn ) && ( jc > -4 ) && ( jc < 4 ) )
+					ldopivot ();
+				else if (( jm == Dirn ) && ( jc > -4 ) && ( jc < 4 ))
+				{
+					ldostep ();
+					lleggesture ();
+					ldotoetaps ();
+				}
+				else
+					ldolimb ();
+			} /* jc OK */
+		} /* ja == TODO */
+		if (( (jm == Dirn)||(jm == Rotn) )&&(jc >= -6)&&(jc <= 6)
+			&&( nmw > 0 )&&( dofig == WOMAN ) )
+			ldohold ();
+		pstart = fstart;
+		pend = fend;
+	} /* j */
+} /* laction */
+/*************************************************/
+
+var linter = function()
+/*
+                     linter
+
+      interpret labanotation score into a NUDES file
+                version linter50.c
+
+      input : LED Labanotation file:   standard input (led.lbn)
+      output: NUDES animation script:  standard output (led.n)
+
+   called by main,
+   calls     lbnread, lsorty, lfindstaff, lstart, lhold,
+             lfindystart, lcolx, lsetrange, lselectfig,
+             lgetout, lcopyfigs, lfinish, lcopysubs,
+             lbows,
+*/
+{
+   lbnread();;
+   lsorty();
+   lfindstaff();
+   lsetrange();
+   lselectfig();
+   lcopyfigs();
+   lstart();
+   lfindystart();
+   lbows(); // flag hand signs
+   lbent(); // flag dirn signs
+   for (st = 0; st < nstaff; ++st)
+   {
+      hold = NO;
+      holdcl = 0;
+      holdco = 0;
+      holdoe = 0;
+      holdpr = 0;
+      holdsh = 0;
+      holdss = 0;
+      facecl = 0;
+      facepr = 0;
+      facesh = 0;
+      facess = 0;
+      prevhold = -9;
+      prevc = 0;
+      pstart = -1;
+      pend = -1;
+      keptf = 0;
+      gy = -1;
+      gh = 0;
+      if (staff[st][5] == TODO)
+      {
+         nbar = -1;
+         if (staff[st][4] == MAN)
+            dofig = MAN;
+         else
+            dofig = WOMAN;
+         lcolx(staff[st][2]);
+         laction();
+         staff[st][5] = DONE;
+      }
+   }
+   lfinish();
+} /* linter */
+/****************************************/
+
+//var shift = function(double x, double y, double z)
+var shift = function(x, y, z)
+/*
+   this adds 'x,y,z' to all centres and joints in lists
+   'elist' and 'jlist'.
+
+   called by  action, dogrofig, dogrojt, domovjnt,
+              twirl, dodrag,
+*/
+{
+   var e,j,n ;
+
+
+   for (  n = 0 ; n < ecount ; ++ n )
+   {
+      e = elist[n] ;
+      cen[e][0] += x ;
+      cen[e][1] += y ;
+      cen[e][2] += z ;
+   }
+   for (  n = 0 ; n < jcount ; ++ n )
+   {
+      j = jlist[n] ;
+      jnt[j][0] += x ;
+      jnt[j][1] += y ;
+      jnt[j][2] += z ;
+   }
+}  /* shift */
+/*****************************/
+
+//var rset = function(double r[3][3], double angl, int axis)
+var rset = function(r, angl, axis)
+/*
+   set up the rotation matrix 'r' for a rotation of
+   'angl' radians about 'axis'.
+
+   called by  input, setobs, dobalanc, dospinby,
+*/
+{
+	  var v = new Array();	//v[5]
+      var i,j,k;
+
+      v[0] = doub0 ;
+      v[1] = doub1 ;
+
+/*   fill out values vector with sin and cos- */
+
+	//TODO REVIEW (May be degrees or radians)
+      v[2] = Math.cos(angl) ;
+      v[3] = Math.sin(angl) ;
+      v[4] = -v[3] ;
+
+/*   choose appropriate permutation of values for rotation axis- */
+
+      for (  i = 0 ; i < 3 ; ++ i )
+      {
+         for (  j = 0 ; j < 3 ; ++ j )
+         {
+            k = perm[axis][j][i] ;
+            r[i][j] = v[k-1] ;
+         }
+      }
+}  /* rset */
+/************************************/
+
+//var matmul = function(double a[3][3], double b[3][3], double c[3][3])
+var matmul = function(a, b, c)
+/*
+     this multiplies matrix 'b' by 'a' and puts the product
+     in 'ans'.
+
+     called by  dobalanc, matrot, dospinto, dospinby, getwist.
+                getaxes, sepn,  getmat,
+
+	  21 Sep 2006  unrolled loops
+*/
+{
+	var ans00,ans01,ans02,ans10,ans11,ans12,ans20,ans21,ans22;
+//
+	ans00 = a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0];
+	ans01 = a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1];
+	ans02 = a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2];
+	ans10 = a[1][0] * b[0][0] + a[1][1] * b[1][0] + a[1][2] * b[2][0];
+	ans11 = a[1][0] * b[0][1] + a[1][1] * b[1][1] + a[1][2] * b[2][1];
+	ans12 = a[1][0] * b[0][2] + a[1][1] * b[1][2] + a[1][2] * b[2][2];
+	ans20 = a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0];
+	ans21 = a[2][0] * b[0][1] + a[2][1] * b[1][1] + a[2][2] * b[2][1];
+	ans22 = a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2];
+//
+	c[0][0] = ans00;
+	c[0][1] = ans01;
+	c[0][2] = ans02;
+	c[1][0] = ans10;
+	c[1][1] = ans11;
+	c[1][2] = ans12;
+	c[2][0] = ans20;
+	c[2][1] = ans21;
+	c[2][2] = ans22;
+}  /* matmul */
+/**********************************************************/
+
+//var vecmul = function(double v[EMAX][3], double m[3][3], int n)
+var vecmul = function(v, m, n)
+/*
+   multiply the 'n'th vector from array 'v'
+   by matrix 'm'.
+
+   called by touch, dogrojnt, domovjnt, domoveby, doabut,
+             twirl,
+*/
+{
+      var i,j ;
+      var x;
+	  var vv = new Array(); //vv[3]
+
+      for (  i = 0 ; i < 3 ; ++ i )
+      {
+         x = doub0 ;
+         for (  j = 0 ; j < 3 ; ++ j )
+         {
+            x = x+m[i][j]*v[n][j] ;
+         }
+         vv[i] = x ;
+      }
+      
+      for (  i = 0 ; i < 3 ; ++ i )
+      {
+         v[n][i] = vv[i] ;
+      }
+}  /* vecmul */
+/**********************************************/
+
+//var rotget = function(double r[3][3], double unr[3][3], int n)
+var rotget = function(r, unr, n)
+/*
+   form a rotation matrix r and its inverse unr
+   from the nth entries in quat
+
+   called by  dobalanc, matrot, dospinto, dospinby,
+              dogrojnt, domovjnt, doabut, doground,
+*/
+{
+      var i,j ;
+      var cp,sp,x,y,z,m,xsp,ysp,zsp,xm,ym,zm,xym,xzm,yzm ;
+
+      x = quat[n][0] ;
+      y = quat[n][1] ;
+      z = quat[n][2] ;
+      sp = quat[n][3] ;
+      cp = quat[n][4] ;
+      m = doub1-cp ;
+      xm = x*m ;
+      ym = y*m ;
+      zm = z*m ;
+      xsp = x*sp ;
+      ysp = y*sp ;
+      zsp = z*sp ;
+      xym = x*ym ;
+      xzm = x*zm ;
+      yzm = y*zm ;
+      r[0][0] = x*xm+cp ;
+      r[0][1] = xym+zsp ;
+      r[0][2] = xzm-ysp ;
+      r[1][0] = xym-zsp ;
+      r[1][1] = y*ym+cp ;
+      r[1][2] = yzm+xsp ;
+      r[2][0] = xzm+ysp ;
+      r[2][1] = yzm-xsp ;
+      r[2][2] = z*zm+cp ;
+
+      for (  i = 0 ; i < 3 ; ++ i )
+      {
+         for (  j = 0 ; j < 3 ; ++ j )
+         {
+            if ((r[j][i] > -tolr) && (r[j][i] < tolr)) r[j][i] = 0;
+            unr[i][j] = r[j][i] ;
+         }
+      }
+}  /* rotget */
+/**************************************/
+
+//var rotput = function(double r[3][3], int n)
+var rotput = function(r, n)
+/*
+   interpret rotation matrix 'r' as direction cosines of a
+   rotation axis, and the sine and cosine of a rotation about
+   that axis, and store in array 'quat'.
+
+   uses the fact that any rotation matrix can be written as -
+
+   ( x.x.m+c    x.y.m-z.s  x.z.m+y.s )
+   ( x.y.m+z.s  y.y.m+c    y.z.m-x.s )
+   ( x.z.m-y.s  y.z.m+x.s  z.z.m+c   )
+
+   where
+     x,y,z-components of unit vector along rotation axis
+             x=cos(a1)cos(a2)  y=cos(a1)sin(a2)  z=sin(a1)
+             a1,a2-azimuth and elevation of axis from x axis
+     s,c  -sine and cosine of rotation about that axis
+     m     = 1-c
+
+     x,y,z are stored in quat[n,0], quat[n,1], quat[n,2]
+     s,c   are stored in quat[n,3], quat[n,4]
+
+   see 'Control of round-off propagation in articulating the
+        human figure', D.Herbison-Evans and D.S.Richardson,
+        Computer Graphics and Image Processing,
+        vol 17, pp. 386-393 (1981)
+
+   called by matrot, dospinto, doangles, dolimb,
+             getwist, store3,
+*/
+{
+      var j,k ;
+      //double a[3][3],b[3],d[3]
+	  var a = get2DArray(3);
+	  var b = new Array();
+	  var d = new Array();
+	  var e,f,g,c,s,trace ;
+      var csq;
+
+      b[0] = r[1][2]-r[2][1] ;
+      b[1] = r[2][0]-r[0][2] ;
+      b[2] = r[0][1]-r[1][0] ;
+      e = b[0]*b[0]+b[1]*b[1]+b[2]*b[2] ;
+      trace = r[0][0]+r[1][1]+r[2][2] ;
+      if (e > doub0) g = sqrt(e); else g = doub0;
+      if (e > tolr)
+      {
+         f = doub1/g ;
+         quat[n][0] = f*b[0] ;
+         quat[n][1] = f*b[1] ;
+         quat[n][2] = f*b[2] ;
+/*
+     use g=2s, and trace=1+2c to find s and c -
+*/
+         s = inv2*g;
+         csq = doub1-s*s;
+         if (csq > doub0) c = sqrt(csq); else c = doub0;
+         if (trace < doub1) c = -c;
+         quat[n][3] = s ;
+         quat[n][4] = c ;
+      }
+      else
+/*
+   symmetric matrix (180 or 360 degree rotation) -
+*/
+      {
+         c = inv2*(trace-doub1);
+         for (  j = 0 ; j < 3 ; ++ j )
+         {
+            d[j] = doub0 ;
+
+/*   run across a row- */
+
+            for (  k = 0 ; k < 3 ; ++ k )
+            {
+               a[j][k] = r[j][k]+r[k][j] ;
+               if (j == k) a[j][j] = doub2*(r[j][j]-c) ;
+               d[j] = d[j]+a[j][k]*a[j][k] ;
+            }
+         }
+
+/*   choose most stable row- */
+
+         j = 0 ;
+         if (d[1] > d[0]) j = 1 ;
+         if (d[2] > d[j]) j = 2 ;
+         if (d[j] > doub0) f = doub1/sqrt(d[j]) ;
+         else
+         {
+            f = doub1;
+            a[j][0] = doub1;
+         }
+         quat[n][0] = f*a[j][0] ;
+         quat[n][1] = f*a[j][1] ;
+         quat[n][2] = f*a[j][2] ;
+         quat[n][3] = inv2*g ;
+         quat[n][4] = c ;
+      }
+      for (k = 0; k < 5; ++k)
+      {
+         if ((quat[n][k] > -tolr) && (quat[n][k] < tolr))
+            quat[n][k] = 0;
+         if (quat[n][k] >  doub1) quat[n][k] =  doub1;
+         if (quat[n][k] < -doub1) quat[n][k] = -doub1;
+      }
+}  /* rotput */
+/********************************************/
+
+//var mkquat = function(int n, double a1, double a2, double a3)
+var mkquat = function(n, a1, a2, a3)
+/*
+   convert angles a1,a2,a3 (in radians) into quat entries
+
+   called by dospinto, inframe, 
+*/
+{
+      var j;
+      var s1,c1,s2,c2,s3,c3 ;
+
+      s1 = sin(a1) ;
+      c1 = cos(a1) ;
+      s2 = sin(a2) ;
+      c2 = cos(a2) ;
+      s3 = sin(a3) ;
+      c3 = cos(a3) ;
+      quat[n][0] = c1*c2 ;
+      quat[n][1] = s1*c2 ;
+      quat[n][2] = s2 ;
+      quat[n][3] = s3 ;
+      quat[n][4] = c3 ;
+      for (j = 0; j < 5; ++j)
+         if ((quat[n][j] > -tolr) && (quat[n][j] < tolr)) quat[n][j] = 0;
+}  /* mkquat */
+/**********************************************************/
+
+
+//var matrot = function(double r[3][3], int n)
+var matrot = function(r, n)
+/*
+      this rotates the 'n'th ellipsoid by rotation matrix 'r'.
+
+      called by twirl.
+      calls     rotget, matmul, rotput,
+*/
+{
+      //double ro[3][3],unro[3][3] ;
+	  var ro = get2DArray(3);
+	  var unro = get2DArray(3);
+	  
+      rotget(ro,unro,n) ;
+      matmul(r,ro,ro) ;
+      rotput(ro,n) ;
+}  /* matrot */
+/**********************************************/
+
+//var twirl = new function(double x, double y, double z, double r[3][3])
+var twirl = new function(x, y, z, r)
+/*
+   rotates all the rotation matrices 'quat', centres 'cen',
+   and joint vectors 'jnt', of ellipsoids and joints in lists
+   'elist' and 'jlist' about a point 'x,y,z' using rotation
+   matrix 'r'.
+
+   called by  dospinto, dospinby, store3,
+   calls      shift, matrot, vecmul, setels,
+*/
+{
+      var e,j,k ;
+
+      shift(-x,-y,-z) ;
+      if (ecount >= 0)
+      {
+
+/*   rotate the ellipsoids and their centres- */
+
+         for (  e = 0 ; e < ecount ; ++e )
+         {
+            k = elist[e];
+/*  don't rotate world ! :- */
+            if (k != 0)
+            {
+               matrot(r,k) ;
+               vecmul(cen,r,k) ;
+            }
+         }
+      }
+
+/*   now for the joints- */
+
+      if (jcount >= 0)
+      {
+         for (  j = 0 ; j < jcount ; ++j )
+         {
+            k = jlist[j];
+            vecmul(jnt,r,k) ;
+         }
+      }
+
+/*   put body part back where it came from- */
+      shift(x,y,z) ;
+}  /* twirl */
+/*****************************/
+
+//var dospinto = function(double xx[3], int refell, double ang[3], double pro)
+var dospinto = function(xx, refell, ang, pro)
+/*
+     spins all ellipsoids in 'elist' and joints in 'jlist'
+     so that 'ellpsd' is proportion 'pro' of the way to the
+     orientation specified as a rotation 'ang' radians
+     about axes of the reference ellipsoid 'refell'
+     about point 'xx'.
+
+   called by  action, dodrag,
+   calls      rotget, rotput, mkquat, matmul, twirl,
+*/
+{
+      var alfa,nualfa;
+      //double mv[3][3],unmv[3][3];
+      //double rf[3][3],unrf[3][3];
+      //double tg[3][3],untg[3][3];
+      //double mt[3][3],nu[3][3];
+	  
+	  var mv = get2DArray(3);
+	  var unmv = get2DArray(3);
+	  var rf = get2DArray(3);
+	  var unrf = get2DArray(3);
+	  var tg = get2DArray(3);
+	  var untg = get2DArray(3);
+	  var mt = get2DArray(3);
+	  var nu = get2DArray(3);
+/*
+   set rotation matrices of moving and reference ellipsoids -
+*/
+      rotget(mv,unmv,ellpsd);
+      rotget(rf,unrf,refell);
+
+/*   find target rotation matrix, and refer to refell- */
+
+      mkquat(EMAX+1,ang[0],ang[1],ang[2]);
+      rotget(tg,untg,EMAX+1);
+      matmul(rf,tg,tg);
+
+/*   find increment rotation matrix to reach target- */
+
+      matmul(tg,unmv,mt);
+      rotput(mt,EMAX+1);
+      if (( quat[EMAX+1][3] == doub0 ) 
+		  && ( quat[EMAX+1][4] == doub0 ))
+      {
+         ok = 53;
+		 printf("dospinto no sine and cosine");
+         alfa = doub0;
+      }
+      else alfa = atan2(quat[EMAX+1][3],quat[EMAX+1][4]) ;
+      nualfa = pro*alfa ;
+      if (alfa > pi ) nualfa = pro*(alfa - twopi);
+      if (alfa < -pi) nualfa = pro*(alfa + twopi);
+      quat[EMAX+1][3] = sin(nualfa);
+      quat[EMAX+1][4] = cos(nualfa);
+      rotget(nu,mt,EMAX+1);
+      twirl(xx[0],xx[1],xx[2],nu);
+}  /* dospinto */
+/*************************************/
+
+//var dospinby = new function(double xx[3], int refell, double angl, int axis)
+var dospinby = function(xx, refell, angl, axis)
+/*
+   spins all ellipsoids and joints in 'elist' and 'jlist'
+   about a point 'x', by an angle 'angl' radians relative to
+   an 'axis' of reference ellipsoid 'refell'.
+
+   called by dobalanc, action, dobend, dotouch, fun, dodrag,
+   calls     rset, rotget, matmul, twirl,
+*/
+{
+      var j,k = 0;
+      //double r[3][3],ro[3][3],unro[3][3];
+	  var r = get2DArray(3);
+	  var ro = get2DArray(3);
+	  var unro = get2DArray(3);
+/*
+        do transformation on required coordinates
+        aligned with axes of the reference ellipsoid-
+*/
+      rset(r,angl,axis);
+      rotget(ro,unro,refell);
+      matmul(r,unro,r);
+      matmul(ro,r,r);
+      for (j = 0; j < 3; ++j)
+         for (k = 0; k < 3; ++k)
+            if ((r[j][k] > -tolr) && (r[j][k] < tolr)) r[j][k] = 0;
+      twirl(xx[0],xx[1],xx[2],r);
+}  /* dospinby */
+/**********************************************************/
+
+//var mkang = function(int n)
+var mkang = function(n)
+/*
+   get angles in radians from 'n'th entry in 'quat' into 
+   array 'ang'.
+
+   called by  doangles, store3, storeang,
+*/
+{
+      var x,y,z,s1,c1,m1 ;
+      var j;
+
+      x = quat[n][0] ;
+      y = quat[n][1] ;
+      z = quat[n][2] ;
+      s1 = z ;
+      m1 = doub1-z*z ;
+      if (m1 > doub0) c1 = sqrt(m1) ;
+         else c1 = doub0 ;
+      if ((x == doub0 ) && ( y == doub0))
+          ang[0] = doub0;
+      else
+          ang[0] = atan2(y,x) ;
+      if ((s1 == doub0 ) && ( c1 == doub0))
+      {
+          ok = 54;
+          printf("mkang: n %d, s1 %f, c1 %f",            
+              n,s1,c1);
+          ang[1] = doub0;
+      }
+      else ang[1] = atan2(s1,c1) ;
+      if ((quat[n][3] == doub0 ) && ( quat[n][4] == doub0))
+      {
+          ok = 52;
+          printf("mkang: n %d, quat[n][3] %f, quat[n][4] %f",            
+              n,quat[n][3],quat[n][4]);
+          ang[2] = doub0;
+      }
+      else 
+	  ang[2] = atan2(quat[n][3],quat[n][4]) ;
+      for (j = 0; j < 3; ++j)
+      {
+         if (ang[j] < doub0) ang[j] += twopi;
+         if (ang[j] > twopi) ang[j] -= twopi;
+      }
+}  /* mkang */
+/*****************************************/
+
+//var storeang = function(int f, int e, double a1, double a2, double a3)
+var storeang = function(f, e, a1, a2, a3)
+/*
+   convert angles a1,a2,a3 in degrees into quaternions
+   and find direction vector of y axis
+   for frame f and ellipsoid e
+
+   called by store3,
+*/
+{
+      var s1,c1,s2,c2,s3,c3;
+
+      s1 = sin(a1) ;
+      c1 = cos(a1) ;
+      s2 = sin(a2) ;
+      c2 = cos(a2) ;
+      s3 = sin(a3) ;
+      c3 = cos(a3) ;
+
+      qu3[f][e][0] = a3*degree ;
+      qu3[f][e][1] = c2*c1 ;
+      qu3[f][e][2] = c2*s1 ;
+      qu3[f][e][3] = -s2 ;
+
+}  /* storeang */
+/**********************************************************/
+
+//var doangles = function(int el, int re, double val[EMAX], int var0, int var1, int var2)
+var doangles = function(el, re, val, var0, var1, var2)
+/*
+  store the angles of 'el' relative to 're' in 'val' array.
+  in degrees.
+
+  called by action, dodrag,
+  calls  matmul, rotget, rotput, mkang,
+*/
+{
+   //double mvro[3][3],mvunro[3][3];
+   //double stro[3][3],stunro[3][3];
+   //double r[3][3];
+   var mvro = get2DArray(3);
+   var mvunro = get2DArray(3);
+   var stro = get2DArray(3);
+   var stunro = get2DArray(3);
+   var r = get2DArray(3);
+
+   rotget(stro,stunro,re) ;
+   rotget(mvro,mvunro,el) ;
+   matmul(stunro,mvro,r) ;
+   rotput(r,EMAX) ;
+   mkang(EMAX) ;
+   val[var0] = ang[0]*degree ;
+   val[var1] = ang[1]*degree ;
+   val[var2] = ang[2]*degree ;
+   if ((val[var0] > doub179)&&(val[var0] < doub181))
+   {
+	   val[var0] -= doub180;
+	   val[var2] = -val[var2];
+   }
+   if (val[var1] > doub180) val[var1] -= doub360;
+}  /* doangles */
+/*********************************/
+
+//var dobend = function(double angle, int axis)
+var dobend = function(angle, axis)
+/*
+  implements flex(38), rotate(39), abduct(40).
+
+  called by action,
+  calls     dospinby,
+*/
+{
+   var refell ;
+   var left ;
+
+   //TODO REVIEW (Was a strangely placed goto)
+   refell = ellpsd ;
+   if (!(t == rotate_keyword_code)){
+	   if (ellpsd == coel[join][0]) refell = coel[join][1] ;
+	   if (ellpsd == coel[join][1]) refell = coel[join][0] ;
+/*
+  assume odd-numbered ellipsoids are on left side of figure-
+*/
+	}
+	if (((ellpsd-figell[fig])%2) == 0)
+          left = TRUE; else left = FALSE;
+/*
+  flex-
+*/
+   if ((t == flex_keyword_code)&&(knee[join])) angle = -angle ;
+/*
+  rotate-
+*/
+   if ((t == rotate_keyword_code)&&( left == FALSE)) angle = -angle ;
+/*
+  abduct-
+*/
+   if ((t == abduct_keyword_code)&&(left == TRUE)) angle = -angle ;
+   dospinby(xx,refell,angle,axis) ;
+}  /* dobend */
+/****************************************************/
+
+/*   compl42.h - based on complu
+
+     This translates a NUDES script into a compact
+     form for use by 'perfrm'.
+
+   subroutines-
+      getout
+      llength
+      nexts
+      match
+      value
+      addname
+      getint
+      inells
+      injts
+      inlims
+      inname
+      dojoin
+      checkin
+      valadd
+      parset
+      inperf
+      compl
+*/
+
+/***************************************/
+
+//var getout = function(int v)
+var getout = function(v)
+/*
+   exit gracefully
+
+   called by main, inlims, openfile, compl, nexts, doperfrm,
+             initsphere, getkeys,
+*/
+{
+   if (v != 0) 
+   {
+	   printf("lintel problem\nok error number %d\n",ok);
+	   printf("line %d, action %d\n%s\n",
+		   pp,p,aline[pp]);
+   }
+   if (infile) fclose(infile);
+   ok = 1;
+} /* getout */
+/********************************************/
+
+var llength = function()
+/*
+   find length of line
+
+   called by nexts,
+*/
+{
+   var j,sp;
+
+   sp = 0;
+   for ( j = 0; line[j] != null; ++j);
+   {
+      if (line[j] != blank) sp = j;
+   }
+   return(sp);
+} /* llength */
+/*******************************************/
+
+//var nexts_a = function( char c ) (returns int)
+var nexts_a = function(c)
+{
+		var astk = '*';
+		var tab = '	';
+		var code;
+
+		code = 0;
+		if ( c == astk ) code = 1;
+		if ( c == '\n' ) code = 2; 
+		if ( c == blank
+				|| c == tab
+				|| c == null ) code = 3;
+		if ( c == '.'
+				|| ( c == '+' ) 
+				|| ( c == '-' )
+				|| ( c == '_' )
+				|| ( c >= '0' ) && ( c <= '9' )
+				|| ( c >= 'a' ) && ( c <= 'z' )
+				|| ( c >= 'A' ) && ( c <= 'Z' ) ) code = 4;
+		return code;
+} /* nexts_a */
+/*****************************************/
+
+//TODO REVIEW (was a convoluted set of GOTOs, now converted into functions.)
+var nexts = function()
+/*
+     this picks the next continuous string of non-blank integers
+     from 'line', starting at 'start'.
+
+     if an asterisk is read, the data is assumed to continue onto
+     the next line.
+
+  input -
+     line - an image of the current line being scanned.
+     start - the start of the scan.
+
+  output -
+     line - an image of the current line being scanned.
+     start - the start of the next non-blank string in line.
+     string - a copy of the first 6 characters of the next
+              non-blank string
+     length - the length of the string.
+
+     called by inperf, inname, inells, injts, inlims, parset,
+     calls     llength, getout,
+*/
+{
+   var j;
+   var astk = '*';
+   var tab = '	';
+
+   length = 0;
+
+   for (  j = 0 ; j < BMAX ; ++ j )
+      string[j] = null ;
+/*
+     get a new line if required-
+*/
+   if ((start < lline) && (start > 0)) lab17() ;
+	function lab10(){
+	   start = 0 ;
+	   if (fgets(line,BMAX,infile) == NULL)
+	   {
+		  console.log("\nOOPS in nexts: unexpected end of file\n");
+		  console.log("missing STOP command?\n");
+		   ok = 3;
+		  getout(ok);
+		  return;
+	   }
+	   ++nline ;
+	   lline = llength();
+	/*
+		 find start of next string-
+	*/
+	}
+	function lab17(){
+   for ( j = start ; j < lline ; ++ j )
+   {
+      if (line[j] == astk) lab10() ;
+      if (line[j] == blank) lab1() ;
+      if (line[j] == tab) lab1() ;
+      if (line[j] == null) lab1() ;
+      if (line[j] == '.') lab3();
+      if ((line[j] == '+') || (line[j] == '-')) lab3();
+      if ((line[j] >= '0') && (line[j] <= '9')) lab3();
+      if ((line[j] >= 'a') && (line[j] <= 'z')) lab3();
+      if ((line[j] >= 'A') && (line[j] <= 'Z')) lab3();
+	  if (line[j] == '_') lab3();
+      lab10();
+	 }
+	}
+	function lab1(){
+/*
+     rest of line empty, so look at next -
+*/
+   j = 0;
+   lab10() ;
+   }
+/*
+     copy up to the characters of the string,
+     then move start to next blank-
+*/
+	function lab3(){
+	   for ( start = j ; start < lline ; ++start )
+	   {
+		  if (line[start] == '\n') return;
+		  if (line[start] == blank) return;
+		  if (line[start] == tab) return;
+		  if (line[start] == null) return;
+		  if (line[start] == '.') lab5();
+		  if ((line[start] == '+') || (line[start] == '-')) lab5();
+		  if ((line[start] >= '0') && (line[start] <= '9')) lab5();
+		  if ((line[start] >= 'a') && (line[start] <= 'z')) lab5();
+		  if ((line[start] >= 'A') && (line[start] <= 'Z')) lab5();
+		  if (line[start] == '_') lab5();
+		  return;
+		function lab5(){
+			  string[length] = line[start] ;
+			  ++length ;
+		  }
+	   }
+	   start = -1 ;
+   }
+} /* nexts */
+/***************************************/
+//END PORT ON 2013-12-10 (Errorage)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
