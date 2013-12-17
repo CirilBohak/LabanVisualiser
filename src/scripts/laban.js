@@ -3290,7 +3290,7 @@ var nexts = function()
 /***************************************/
 
 //var match = function(int nnames, int lengths[EMAX], char names[EMAX][BMAX]) (returns int)
-var match = function(names, lengths[EMAX], names)
+var match = function(names, lengths, names)
 /*
      find which of 'names' fits 'string'.
 
@@ -3929,11 +3929,11 @@ var parset = function(contrl)
      calls  nexts, getint, value, valadd, match, addnam,
 */
 {
-	int k;
-	int nax = 2;
-	int attach = 8;
-	int detach = 9;
-	double v;
+	var k;//int
+	var nax = 2;//int
+	var attach = 8;//int
+	var detach = 9;//int
+	var v;//double
 
 	k = 0;
 	if ( contrl == 0 ) return( k );
@@ -3956,7 +3956,7 @@ var parset = function(contrl)
 	return( k );
 
 	function lab1(){
-		://pick an axis-
+		//pick an axis-
 		if ( ( contrl != 5 ) && ( contrl != 8 ) ) return( lab2() );
 
 		k = match ( nax, axlen, axnam );
@@ -4087,7 +4087,7 @@ var inperf = function()
 	{
 		start = -1;
 		nexts ();
-		linel = (int)strlen ( line );
+		linel = parseInt(strlen ( line ));	//TODO REVIEW (Was cast to int)
 		for ( s = 0; s < linel; ++s )
 			aline[comand][s] = line[s];
 		how = match ( NKEYS, keylen, keynam );
@@ -4407,7 +4407,7 @@ var setels = function(ellpsd, jthis)
 			 for ( j=0; j < njts; ++j )
 			 {
 				if ((j == jthis) && (jthis > 0)) continue;
-				boolean b = false;
+				var b = false;//boolean
 				for (  jj=0; jj < jcount; ++jj ){
 				   if (j == jlist[jj]){
 					b = true;
@@ -4494,7 +4494,7 @@ var setels = function(ellpsd, jthis)
 ***********************************************/
 
 //void setcof(double coef[7], double el[3][3] )
-voar setcof = function(coef, el )
+var setcof = function(coef, el )
 /* 
      set up coeffs of outline ellipse of an ellipsoid about 
      its own centre in the form -  
@@ -4768,7 +4768,7 @@ var doshadow = function()
 /******************************************/
 
 //void save(void)
-var save()
+var save = function()
 /*
    save positions and orientations
 
@@ -4792,7 +4792,7 @@ var save()
 /***********************************************/
 
 //void restore(void)
-var restore()
+var restore = function()
 /*
    restore positions and orientations
 
@@ -5067,13 +5067,3940 @@ var setjnt = function(ellpsd, jthis)
     }
 }  /* setjnt */
 /*************************************************/
-
 //END PORT ON 2013-12-10 (Errorage)
 
+//PORT ON 2013-12-11 (Errorage)
+
+//void setfrc(int frame, int start, int stp)
+var setfrc = function(frame, start, stp)
+/*
+  set up prop and frac -  proportion of current action time
+  to be done for current frame.
+
+  variables -
+     a - number of frames done of current action
+     aa - number of increments of current action done
+     b - number of frames to be done
+     bb - number of increments of current action to be done
+     even  - 0 if n is even, 1 if n is odd
+     nn - total number of increments in current action
+
+  called by  prfrm,
+*/
+{
+   var a,aa,b,bb,h,n,nn,even;//double
+   var distrp ;//int
+
+   distrp = distrn[pp];
+   n = stp-start ;
+   nn = n*(n+doub1)*inv2 ;
+   a = frame-start ;
+   aa = a*(a+doub1)*inv2 ;
+   b = stp-frame+1 ;
+   bb = b*(b+doub1)*inv2 ;
+   even = parseInt(n)%2 ;	//TODO REVIEW (n was cast to int, parseInt() may round it different)
+   h = parseInt(n)/2 ;	//TODO REVIEW (n was cast to int, parseInt() may round it different)
+/*
+  repeat command-
+*/
+   if (distrp == repeat_keyword_code)
+   {
+      prop = doub1 ;
+      frac = doub1 ;
+   }
+   else
+/*
+  linear command-
+*/
+   if (distrp == linear_keyword_code)
+   {
+      if ((b  == doub0) || (n == doub0))
+      {
+         ok = 10 ;
+         console.log("\nOOPS setfrc: linear b "+b+",  n "+n+", start "+start+"\n");
+      }
+      else
+      {
+         frac = doub1/n;
+         prop = doub1/b;
+      }
+   }
+   else
+/*
+  acceleration command-
+*/
+   if (distrp == accele_keyword_code)
+   {
+      if ((nn == doub0) || ((nn-aa+a) == doub0))
+      {
+         ok = 11 ;
+         console.log("\nOOPS setfrc: accel bb "+bb+",  nn "+nn+", start "+start+"\n");
+      }
+      else
+      {
+         frac = a/nn ;
+         prop = a/(nn-aa+a) ;
+      }
+   }
+   else
+/*
+  deceleration command-
+*/
+   if (distrp == decele_keyword_code)
+   {
+      if ((nn == doub0) || (bb == doub0))
+      {
+         ok = 12 ;
+         console.log("\nOOPS setfrc: decele bb "+bb+",  nn "+nn+", start "+start+"\n");
+      }
+      else
+      {
+         frac = b/nn ;
+         prop = b/bb ;
+      }
+   }
+   else
+/*
+  quadratic command-
+*/
+   if (distrp == quadra_keyword_code)
+   {
+      nn = (n*(n+doub2)+even)/doub4 ;
+      if (nn == doub0)
+      {
+         ok = 13 ;
+         console.log("\nOOPS setfrc: quadra nn "+nn+", start "+start+"\n");
+      }
+      else
+      {
+         frac = a/nn;
+         if (a >= b) frac = b/nn ;
+      }
+      if (bb == doub0)
+      {
+         ok = 13 ;
+         console.log("\nOOPS setfrc: quadra bb "+bb+", start "+start+"\n");
+      }
+      prop = b/bb ;
+      if (a < b)
+      {
+         if ((nn-aa+a) == doub0)
+         {
+            ok = 13 ;
+         console.log("\nOOPS setfrc: quadra nn-aa+a "+(nn-aa+a,start)+", start %d\n");
+         }
+         prop = a/(nn-aa+a) ;
+      }
+   }
+   else
+/*
+   cubic command-
+*/
+   if (distrp == cubic_keyword_code)
+   {
+      nn = h*(h+doub1)*(doub2*h+doub1)*inv3 + even*(h+doub1)*(h+doub1);
+      aa = a*(a+doub1)*(doub2*a+doub1)*inv6;
+      bb = b*(b+doub1)*(doub2*b+doub1)*inv6;
+      if ( a < b )
+      {
+         if (nn > doub0) frac = a*a/nn; else frac = doub1;
+         if ((nn-aa+a*a) > doub0) prop = a*a/(nn-aa+a*a); else prop = doub1;
+      }
+      else
+      {
+         if (nn > doub0) frac = b*b/nn; else frac = doub1;
+         if (bb > doub0) prop = b*b/bb; else prop = doub1;
+      }
+   }
+} /* setfrc */
+/************************************************************/
+
+//double doscale(double x)
+var doscale = function(x)
+/*
+   scale x by proportion frac
+
+   called by setper,
+*/
+{
+   var v1,v2,v3,v4,v5;//double
+
+   if (x == doub0)
+   {
+      ok = 51;
+      console.log("\nOOPS scale: scale factor 0\n");
+      v5 = doub0;
+   }
+   else
+   {
+      if (x > doub0) v1= x; else v1 = -x;
+      if ( v1 > doub0) v2 = log(v1); else v2 = doub0;
+      v3 = frac*v2;
+      v4 = exp(v3);
+      if (x > doub0) v5 = v4; else v5 = -v4;
+   }
+   return(v5);
+}  /* doscale */
+/***************************************/
+
+//int findfg(int ell)
+var findfg = function(ell)
+/*
+  find the figure (excluding 'every')
+  that includes the ellipsoid 'ell'.
+
+  called by setper, doattach, dodetach,
+  calls     setels,
+*/
+{
+   var e,f;//int
+
+   setels(ell,-1) ;
+   for (  f = 1 ; f <= nfigs ; ++ f )
+   {
+      for (  e = 0 ; e < ecount ; ++ e )
+         if (figell[f] == elist[e]) return(f);
+   }
+/*
+  snag-
+*/
+   ok = 35 ;
+   console.log("\nOOPS findfg: ecount "+ecount+", ell "+ell+" "+ename[ell]+"\n");
+   return(-1);
+}  /* findfg */
+/************************************************/
+
+//void checkpr(void)
+var checkpr = function()
+/*
+  check parameters for legality
+
+  called by  setper,
+*/
+{
+	if ((njts > 0)&&((join < 0) || (join > njts))){
+		lab12();
+		return
+	}
+	if ((axis < 0) || (axis > 2)){
+		ab13();
+		return;
+	}
+	if ((ellpsd < 0) || (ellpsd > ne)){
+		ab14();
+		return;
+	}
+	if ((refell < 0) || (refell > ne)){
+		ab15();
+		return;
+	}
+	if ((ell1 < 0) || (ell1 > ne)){
+		ab20();
+		return;
+	}
+	if ((ell2 < 0) || (ell2 > ne)){
+		ab21();
+		return;
+	}
+	if ((fig < 0) || (fig > nfigs)){
+		ab16();
+		return;
+	}
+	if (nvars <= 0) return;
+	if ((var0 < 0) || (var0 >= EMAX)){
+		ab17();
+		return;
+	}
+	if ((var1 < 0) || (var1 >= EMAX)){
+		ab18();
+		return;
+	}
+	if ((var2 < 0) || (var2 >= EMAX)){
+		ab19();
+		return;
+	}
+	if (newcol[0] < -nfiles){
+		ab45();
+		return;
+	}
+	if (newcol[0] <= 0)
+	{
+		if (newcol[1] < 0){
+			ab48();
+			return;
+		}
+		if (newcol[2] < 0){
+			ab49();
+			return;
+		}
+	}
+	return;
+/*
+  data snag-
+*/
+	function lab12(){
+		lab12: ok = 16 ;
+		console.log("\nOOPS checkpr: joint "+join+" out of range 0 to  "+njts+"\n");
+		return;
+	}
+
+	function lab13(){
+		lab13: ok = 17 ;
+		console.log("\nOOPS checkpr: axis "+axis+" out of range 0 to 2\n");
+		return;
+	}
+
+	function lab14(){
+		lab14: ok = 18 ;
+		console.log("\nOOPS checkpr: ellpsd "+ellpsd+" out of range 0 to "+ne+"\n");
+		return;
+	}
+	
+	function lab15(){
+		lab15: ok = 19 ;
+		console.log("\nOOPS checkpr: refell "+refell+" out of range 0 to "+ne+"\n");
+		return;
+	}
+
+	function lab16(){
+		lab16: ok = 20 ;
+		console.log("\nOOPS checkpr: fig "+fig+" out of range 0 to "+nfigs+"\n");
+		return;
+	}
+
+	function lab17(){
+		lab17: ok = 21 ;
+		console.log("\nOOPS checkpr: var0 "+var0+" out of range 0 to "+nvars+"\n");
+		return;
+	}
+	
+	function lab18(){
+		lab18: ok = 22 ;
+		console.log("\nOOPS checkpr: var1 "+var1+" out of range 0 to "+nvars+"\n");
+		return;
+	}
+
+	function lab19(){
+		ok = 23 ;
+		console.log("\nOOPS checkpr: var2 "+var2+" out of range 0 to "+nvars+"\n");
+		return;
+	}
+
+	function lab20(){
+		ok = 36 ;
+		console.log("\nOOPS checkpr: ell1 "+ell1+" out of range 0 to "+ne+"\n");
+		return;
+	}
+
+	function lab21(){
+		ok = 37 ;
+		console.log("\nOOPS checkpr: ell2 "+ell2+" out of range 0 to "+ne+"\n");
+		return;
+	}
+
+	function lab45(){
+		ok = 45 ;
+		console.log("\nOOPS checkpr: newcol[0] "+newcol[0]+" out of range\n");
+		return;
+	}
+
+	function lab48(){
+		ok = 48 ;
+		console.log("\nOOPS checkpr: newcol[1] "+                   newcol[1]+" out of range\n");
+		return;
+	}
+
+	function lab49(){
+		ok = 49 ;
+		console.log("\nOOPS checkpr: newcol[2] "+  newcol[2]+" out of range\n");
+	}
 
 
+}  /* checkpr */
+/***************************************/
+
+//void setper ( int keyword_code )
+var setper = function(keyword_code )
+/*
+  decodes the parameters of the 'pp'th action using -
+
+     0 - none
+     1 - x
+     2 - y
+     3 - z
+     4 - ang1
+     5 - ang2
+     6 - ang3
+     7 - x scaling factor
+     8 - y scaling factor
+     9 - z scaling factor
+    10 - value for a variable
+    11,12,13 - red, green and blue colour coords
+    14 - the debug parameter
+    15 - reference to a file name in list 'fname'
+    21 - axis
+    22 - joint
+    23 - reference ellipsoid
+    24 - ellpsd (moving or central ellipsoid)
+    25 - fig  (figure)
+    27,28,29 - var0,var1,var2 (references to variables)
+    30 - ell1 (ellipsoid to touch)
+    31 - ell2 (ellipsoid to be touched)
+
+  called by doperfrm,
+  calls     getvalu, checkpr, findfg, setels,
+*/
+{
+	var c;//int
+	var j;//int
+
+	if ( ( keyword_code < 1 ) || ( keyword_code > NKEYS ) )
+	{
+		ok = 14;
+		console.log("\nOOPS setper: keyword_code "+keyword_code+"\n");
+		bell ( 1, 1 );
+		return;
+	}
+
+	for (  j = 0; j < 6; ++ j )//run thru parameters of 'p'th action
+	{
+		c = code[keyword_code][j];
+		if ( c != 0 )
+		{
+			k = getvalu ( pf[pp][j] );
+			if ( ok != 0 ) return;
+
+			//			set real parameters -
+
+			if ( c ==  1 ) xx[0] = v;
+			if ( c ==  2 ) xx[1] = v;
+			if ( c ==  3 ) xx[2] = v;
+			if ( c ==  4 ) ang[0] = v * radian;
+			if ( c ==  5 ) ang[1] = v * radian;
+			if ( c ==  6 ) ang[2] = v * radian;
+			if ( keyword_code != growto_keyword_code )
+			{
+				if ( c ==  7 ) factor[0] = doscale ( v );
+				if ( c ==  8 ) factor[1] = doscale ( v );
+				if ( c ==  9 ) factor[2] = doscale ( v );
+			}
+			if ( keyword_code == growto_keyword_code )
+			{
+				if ( c ==  7 ) factor[0] = v;
+				if ( c ==  8 ) factor[1] = v;
+				if ( c ==  9 ) factor[2] = v;
+			}
+			if ( c == 10 ) varval = v;
+
+			//			set int parameters-
+
+			if ( c == 11 ) newcol[0] = k;
+			if ( c == 12 ) newcol[1] = k;
+			if ( c == 13 ) newcol[2] = k;
+			if ( c == 21 ) axis = k;
+			if ( c == 22 ) join = k;
+			if ( c == 23 ) refell = k;
+			if ( c == 24 ) ellpsd = k;
+			if ( c == 25 ) fig = k;
+			if ( c == 27 ) var0 = EMAX - k - 1;
+			if ( c == 28 ) var1 = EMAX - k - 1;
+			if ( c == 29 ) var2 = EMAX - k - 1;
+			if ( c == 30 )
+			{
+				ell1 = k;
+				ellpsd = k;
+			}
+			if ( c == 31 ) ell2 = k;
+		} /* c != 0 */
+	}	/* j */
+
+	//	check for errors-
+
+	checkpr ( );
+	if ( ok != 0 ) return;
+
+	/*
+	if appropriate, set up lists of ellipsoids and joints
+	in affected figures ( NB figell[every] is -1)  -
+	*/
+	if ( keyword_code == drag_keyword_code )
+	{
+		if ( ellpsd == coel[join][0] )
+			refell = coel[join][1];
+		else
+			refell = coel[join][0];
+	}
+
+	if ( code[keyword_code][0] == linear_keyword_code )
+	{
+		setels ( figell[fig], -1 );
+		if ( ok != 0 ) return;
+	}
+
+	if ( ( keyword_code == rotate_keyword_code )
+		|| ( keyword_code == abduct_keyword_code )
+		|| ( keyword_code == drag_keyword_code )
+		|| ( keyword_code == abut_keyword_code ) )
+	{
+		fig = findfg ( ellpsd );
+		if ( ok != 0 ) return;
+	}
+
+	if ( keyword_code == abut_keyword_code )
+	{
+		setels ( ellpsd, -1 );
+		if ( ok != 0 ) return;
+	}
+	else if ( ( keyword_code == balanc_keyword_code )
+		|| ( keyword_code == touch_keyword_code )
+		|| ( keyword_code == bendby_keyword_code )
+		|| ( keyword_code == bendto_keyword_code )
+		|| ( keyword_code == flex_keyword_code )
+		|| ( keyword_code == rotate_keyword_code )
+		|| ( keyword_code == abduct_keyword_code )
+		|| ( keyword_code == drag_keyword_code )
+		|| ( keyword_code == linkx_keyword_code ) )
+	{
+		if ( keyword_code != linkx_keyword_code ) setels ( ellpsd, join );
+		if ( ok != 0 ) return;
+		xx[0] = jnt[join][0];
+		xx[1] = jnt[join][1];
+		xx[2] = jnt[join][2];
+	}
+
+	if ( ( keyword_code == grofig_keyword_code )
+		|| ( keyword_code == spinto_keyword_code )
+		|| ( keyword_code == spinby_keyword_code )
+		|| ( keyword_code == center_keyword_code )
+		|| ( keyword_code == centre_keyword_code ) )
+	{
+		xx[0] = cen[ellpsd][0];
+		xx[1] = cen[ellpsd][1];
+		xx[2] = cen[ellpsd][2];
+	}
+	else if ( keyword_code == moveto_keyword_code )
+	{
+		xx[0] = xx[0] - cen[ellpsd][0];
+		xx[1] = xx[1] - cen[ellpsd][1];
+		xx[2] = xx[2] - cen[ellpsd][2];
+	}
+
+	if ( ( keyword_code == growto_keyword_code ) )
+	{
+		xx[0] = cen[ellpsd][0];
+		xx[1] = cen[ellpsd][1];
+		xx[2] = cen[ellpsd][2];
+		return;
+	}
+
+	if ( ( keyword_code == opacty_keyword_code ) )
+	{
+		xx[0] = cen[ellpsd][0];
+		xx[1] = cen[ellpsd][1];
+		xx[2] = cen[ellpsd][2];
+		return;
+	}
+	if ( ( keyword_code == lghtng_keyword_code ) )
+	{
+		xx[0] = cen[ellpsd][0];
+		xx[1] = cen[ellpsd][1];
+		xx[2] = cen[ellpsd][2];
+		return;
+	}
+   for (j = 0; j < ne; ++j)
+	{
+		minax[j] = ax[j][0];
+		if (ax[j][1] < minax[j]) minax[j] = ax[j][1];
+		if (ax[j][2] < minax[j]) minax[j] = ax[j][2];
+		maxax[j] = ax[j][0];
+		if (ax[j][1] > maxax[j]) maxax[j] = ax[j][1];
+		if (ax[j][2] > maxax[j]) maxax[j] = ax[j][2];
+	}
+}  /* setper */
+/****************************************************/
+
+//double sqr(double x)
+var sqr = function(x)
+/*
+
+  called by   surf, angsepn, dotouch,
+
+  16 Sep 2006 called by totouch
+*/
+{
+   return(x*x);
+}  /* sqr */
+/*******************************************************/
+
+//void docolour(double prop)
+var docolour = function(prop)
+/*
+  sets ellipsoid colour proportionately to the appropriate rgb.
+
+  called by  action,
+*/
+{
+   col[ellpsd][0] += prop*(newcol[0]-col[ellpsd][0]) ;
+   col[ellpsd][1] += prop*(newcol[1]-col[ellpsd][1]) ;
+   col[ellpsd][2] += prop*(newcol[2]-col[ellpsd][2]) ;
+   if (t == 52) col[ellpsd][0] = -newcol[0] ;
+}  /* docolour */
+/***************************************/
+
+//void doplace(void)
+var doplace = function()
+/*
+  set observers viewing point to new values.
+
+  called by  action,
+*/
+{
+   pplace[0] += prop*(xx[0]-pplace[0]);
+   pplace[1] += prop*(xx[1]-pplace[1]);
+   pplace[2] += prop*(xx[2]-pplace[2]);
+}  /* doplace */
+/***************************************/
+
+//void setobs(void)
+var setobs = function()
+/*
+  set up matrix 'obs' for eulerian angles in 'ang'.
+
+  called by action,
+  calls     rset, matmul,
+*/
+{
+   //double newang[3];
+   //double r1[3][3],r2[3][3],r3[3][3] ;
+   
+   newang = Array();
+   r1 = get2DArray(3);
+   r2 = get2DArray(3);
+   r3 = get2DArray(3);
+
+   newang[0] = oldang[0] + prop*(ang[0]-oldang[0]);
+   newang[1] = oldang[1] + prop*(ang[1]-oldang[1]);
+   newang[2] = oldang[2] + prop*(ang[2]-oldang[2]);
+   rset(r1,newang[0],0) ;
+   rset(r2,newang[1],1) ;
+   rset(r3,newang[2],2) ;
+   matmul(r1,r2,obs) ;
+   matmul(obs,r3,obs) ;
+   oldang[0] = newang[0];
+   oldang[1] = newang[1];
+   oldang[2] = newang[2];
+}  /* setobs */
+/************************************************************/
+
+//void enquir(int thisp, double array[EMAX][3])
+var enquir = function(thisp, array)
+/*
+  store values from 'array' into variables.
+
+  called by  action,
+*/
+{
+   val[var0] = array[thisp][0] ;
+   val[var1] = array[thisp][1] ;
+   val[var2] = array[thisp][2] ;
+}  /* enquir */
+/************************************************************/
+
+//void doattach(void)
+var doattach = function()
+/*
+  create a joint 'join' at point 'x,y,z'
+  relative to centre of refell.
+
+  called by action,
+  calls     findfg,
+*/
+{
+   var fig1,fig2,low,high ;//int
+
+   if ((coel[join][1] != -1) || (coel[join][0] != -1))
+   {
+      ok = 42 ;
+	  console.log("doattach: join "+join,coel[join][0]+", coel[join][0] %d,  coel[join][1] "+coel[join][1]+"\n");
+   }
+   else
+   {
+/*
+  find lowest ellipsoid of the figures being connected-
+*/
+      fig1 = findfg(ellpsd);
+      fig2 = findfg(refell);
+      if (ok == 0)
+      {
+         high = fig2 ;
+         low = fig1 ;
+         if (figell[low] > figell[high])
+         {
+            low = fig2 ;
+            high = fig1 ;
+         }
+         figell[high] = figell[low] ;
+         coel[join][0] = ellpsd ;
+         coel[join][1] = refell ;
+         jnt[join][0] = xx[0]+cen[ellpsd][0] ;
+         jnt[join][1] = xx[1]+cen[ellpsd][1] ;
+         jnt[join][2] = xx[2]+cen[ellpsd][2] ;
+      }
+   }
+}  /* doattach */
+/*************************************/
+
+//void dodetach(void)
+var dodetach = function()
+/*
+  split 1 figure into 2.
+
+  called by action,
+  calls     findfg, setels,
+*/
+{
+	var othere,otherf;//int
+	var j,k;//int
+	var fgk ;//int
+	//int fg[2],el[2] ;
+	var fg = Array();
+	var el = Array();
+/*
+  check if the new figure 'fig' is already being used -
+*/
+	j = figell[fig] ;
+	if (j != 0)
+	{
+		ok = 43;
+
+		console.log("\nOOPS dodetach:  fig "+fig+" "+fname[fig]+",  figell[fig] "+figall[fig]+" "+ename[figell[fig]]+"\n");
+		return;
+	}
+/*
+   fig ok, so start detaching-
+*/
+	othere = 0 ;
+	if (coel[join][0] == ellpsd) othere = coel[join][1] ;
+	if (coel[join][1] == ellpsd) othere = coel[join][0] ;
+	if (othere == 0)
+	{
+		ok = 44 ;
+		console.log("\nOOPS dodetach:  join "+join+" "+jname[join]+",  ellpsd "+ellpsd+" "+ename[ellpsd]+", othere "+othere+" "+ename[othere]+"\n");
+		return;
+	}
+	otherf = findfg(othere);
+	if (ok != 0) return;
+/*
+   move all the joints down one -
+*/
+	for (j = join; j < njts; ++j)
+	{
+		coel[j][0] = coel[j+1][0] ;
+		coel[j][1] = coel[j+1][1] ;
+		jnt[j][0] = jnt[j+1][0];
+		jnt[j][1] = jnt[j+1][1];
+		jnt[j][2] = jnt[j+1][2];
+	}
+	--njts;
+/*
+   find representative ellipsoid of each figure -
+*/
+	el[0] = ellpsd ;
+	el[1] = othere ;
+	fg[0] = fig ;
+	fg[1] = otherf ;
+	for (  k = 0 ; k < 2 ; ++ k )
+	{
+		  setels(el[k],-1);
+		  fgk = fg[k] ;
+		  figell[fgk] = EMAX ;
+		for (  j = 0 ; j < ecount ; ++ j ){
+			if (elist[j] < figell[fgk]) figell[fgk] = elist[j] ;
+		}
+	}
+return;
+}  /* dodetach */
+/*******************************/
+
+//void domoveby( double x, double y, double z, int refell)
+var domoveby = function(x, y, z, refell)
+/*
+  moves ellipsoids and joints in lists 'elist' and 'jlist'
+  by vector 'x,y,z' relative to the axes of 'refell'.
+
+  called by  try, action, abut, fun,
+  calls      rotget, vecmul, shift,
+*/
+{
+   //double v[EMAX][3];
+   //double r[3][3];
+   //double unr[3][3] ;
+   var v = get2DArray(EMAX);
+   var r = get2DArray(3);
+   var unr = get2DArray(3);
+
+   v[0][0] = x ;
+   v[0][1] = y ;
+   v[0][2] = z ;
+   rotget(r,unr,refell) ;
+   vecmul(v,r,0) ;
+   shift(v[0][0],v[0][1],v[0][2]);
+}  /* domoveby */
+/************************************************************/
+
+//void dogroell( double f[3], int j, double a[EMAX][3])
+var dogroell = function(f, j, a)
+/*
+  scales jth member of array by factor 'f'.
+
+  called by  action, dogrofig,
+*/
+{
+   a[j][0] *= f[0] ;
+   a[j][1] *= f[1] ;
+   a[j][2] *= f[2] ;
+}  /* dogroell */
+/***************************************/
+
+//void dogrofig( double x0, double x1, double x2)
+var dogrofig = function(x0, x1, x2)
+/*
+  scale parts in 'elist' and 'jlist' about the point 'x0,x1,x2',
+  multiplying all semi-axes and coords of centres and joints
+  by factor[0],factor[1],factor[2] in x,y, and z directions 
+  respectively
+
+  called by  action, dogrojnt,
+  calls      shift, dogroell,
+*/
+{
+	var e,j,n ;//int
+
+	shift(-x0,-x1,-x2);
+	for (  n = 0 ; n < ecount ; ++ n )
+	{
+		e = elist[n];
+		dogroell(factor,e,cen) ;
+		dogroell(factor,e,ax) ;
+		maxax[e] = ax[e][0];
+		minax[e] = ax[e][0];
+		for (j = 1; j < 3; ++j)
+		{
+			if (ax[e][j] > maxax[e]) maxax[e] = ax[e][j];
+			if (ax[e][j] < minax[e]) minax[e] = ax[e][j];
+		}
+	}
+	for (  n = 0 ; n < jcount ; ++ n )
+		dogroell(factor,jlist[n],jnt) ;
+	shift(x0,x1,x2);
+}  /* dogrofig */
+/********************************************/
+
+//void dogrojnt(void)
+var dogrojnt = function()
+/*
+  scales ellipsoid 'ellpsd' by factors 'f', keeping position
+  of joint 'join' fixed and moving all other joints and
+  ellipsoids connected to 'ellpsd' appropriately.
+
+  called by  action,
+  calls      rotget, twirl, dogrofig, setels, vecmul, shift,
+*/
+{
+   //double d[EMAX][3],r[3][3],unr[3][3] ;
+	var d = get2DArray(EMAX);
+	var r = get2DArray(3);
+	var unr = get2DArray(3);
+	var x0,x1,x2;//double
+	var jscan,othere,dim ;//int
+
+	if ((njts <= 0) || (njts > EMAX)){
+		ok = 40;
+		console.log("\nOOPS dogrojnt:  njts "+njts+"\n");
+		return;
+	}
+	if ((coel[join][0] != ellpsd)&&(coel[join][1] != ellpsd)){
+		ok = 41;
+		console.log("\nOOPS dogrojnt:  ellpsd "+ellpsd+"\n");
+		return;
+	}
+
+	rotget(r,unr,ellpsd) ;
+/*
+  scale and shift the growing ellipsoid-
+*/
+	x0 = jnt[join][0] ;
+	x1 = jnt[join][1] ;
+	x2 = jnt[join][2] ;
+	elist[0] = ellpsd ;
+	ecount = 1;
+	jcount = 0;
+	twirl(x0,x1,x2,unr) ;
+	dogrofig(x0,x1,x2) ;
+	twirl(x0,x1,x2,r) ;
+/*
+  now shift everything connected to ellpsd-
+*/
+	for ( jscan = 0 ; jscan < njts ; ++ jscan )
+	{
+		if (jscan != join)
+		{
+			othere = 0 ;
+			if (coel[jscan][0] == ellpsd) othere = coel[jscan][1] ;
+			if (coel[jscan][1] == ellpsd) othere = coel[jscan][0] ;
+			if (othere != 0)
+			{
+/*
+  find parts connected to jscan through othere-
+*/
+				setels(othere,jscan);
+				if (ok != 0) return;
+/*
+  find out how much to shift things hanging here-
+*/
+				for ( dim = 0 ; dim < 3 ; ++ dim )
+					d[0][dim] = jnt[jscan][dim]-jnt[join][dim] ;
+				vecmul(d,unr,0) ;
+				for ( dim = 0 ; dim < 3 ; ++ dim )
+					d[0][dim] = d[0][dim]*(factor[dim]-doub1) ;
+				vecmul(d,r,0) ;
+				shift(d[0][0],d[0][1],d[0][2]);
+			} /* othere != 0 */
+		} /* jscan != join */
+	} /* jscan */
+	return;
+}  /* dogrojnt */
+/************************************************************/
+
+//void domovjnt(void)
+var domovjnt = function()
+/*
+  moves joint 'join' by amounts 'x', keeping the position
+  of ellipsoid 'ellpsd' fixed and moving all other joints
+  and ellipsoids connected to 'join' appropriately.
+
+  called by  action,
+  calls      rotget, setjnt, vecmul, shift,
+*/
+{
+   //double d[EMAX][3],r[3][3],unr[3][3] ;
+	var d = get2DArray(EMAX);
+	var r = get2DArray(3);
+	var unr = get2DArray(3);
+	var othere,dim ;//int
+
+	if ((njts <= 0) || (njts > EMAX)){
+		lab11();
+		return;
+	}
+	othere = 0 ;
+	if (coel[join][0] == ellpsd) othere = coel[join][1] ;
+	if (coel[join][1] == ellpsd) othere = coel[join][0] ;
+	if (othere == 0){
+		lab11();
+		return;
+	}
+
+	rotget(r,unr,ellpsd) ;
+/*
+  shift the joint -
+*/
+	for (dim = 0; dim <3; ++dim)
+		d[0][dim] = frac*xx[dim];
+	setjnt(ellpsd,join);
+	vecmul(d,unr,0);
+	shift(d[0][0],d[0][1],d[0][2]);
+	return;
+/*
+  snags-
+*/
+	function lab11(){
+		ok = 63 ;
+		console.log("\nOOPS domovjnt:  join "+join+",  ellpsd "+ellpsd+"\n");
+	}
+}  /* domovjnt */
+/************************************************************/
+
+//void dobalanc(void)
+var dobalanc = function()
+/*
+  balance part of a figure by bending ellipsoid 'ellpsd' at
+  the joint at point 'x' about 'axis' of ellipsoid 'refell'.
+
+  called by  action,
+  calls      rotget, rset, matmul, vecmat, dospinby,
+*/
+{
+	var wsum,wmod,uw,vw,alpha,beta,phi,mass;//double
+	//double dx[3],u[3],u1[3],u2[3],v[3],w[3],w1[3],ww[3];
+	var dx = Array();
+	var u = Array();
+	var u1 = Array();
+	var u2 = Array();
+	var v = Array();
+	var w = Array();
+	var w1 = Array();
+	var ww = Array();
+	//double ro[3][3],unro[3][3],rph[3][3],ralph[3][3],rb[3][3];
+	var ro = get2DArray(3);
+	var unro = get2DArray(3);
+	var rph = get2DArray(3);
+	var ralph = get2DArray(3);
+	var rb = get2DArray(3);
+	var usq;//double
+	var j,k,thise ;//int
+
+	rotget(ro,unro,refell) ;
+/*
+  form unit vector along rotation axis
+*/
+	for (  k = 0 ; k < 3 ; ++ k )
+	{
+		ww[k] = doub0;
+		u[k] = ro[k][axis] ;
+	}
+/*
+  run through moving ellipsoids-
+*/
+	for (  j = 0 ; j < ecount ; ++ j )
+	{
+		thise = elist[j] ;
+		mass = ax[thise][0]*ax[thise][1]*ax[thise][2] ;
+/*
+  find vector to jth moving ellipsoid centre-
+*/
+		for (  k = 0 ; k < 3 ; ++ k )
+		{
+			dx[k] = cen[thise][k]-xx[k];
+			ww[k] += mass*dx[k];
+		}
+	}
+/*
+  find vector 'w' to centre of mass of moving parts -
+*/
+	wsum = doub0;
+	for (k = 0; k < 3; ++k)
+		wsum += ww[k]*ww[k];
+	if (wsum > doub0) wmod = sqrt(wsum); else wmod = doub0;
+	for (k = 0; k < 3; ++k)
+		if (wmod > doub0) w[k] = ww[k]/wmod; else w[k] = doub0;
+/*
+   find vector 'v' at point on meridien through u
+   equal in distance from u as w is from u -
+*/
+	uw = doub0;
+	for (k = 0; k < 3; ++k)
+		uw += u[k]*w[k];
+	usq = u[0]*u[0] + u[2]*u[2];
+	if (usq > doub0) u1[0] = sqrt(usq); else u1[0] = doub0;
+	u1[1] = u[1];
+	u1[2] = doub0;
+	if ((uw < -doub1) || (uw > doub1)) 
+		alpha = doub0; 
+	else 
+		alpha = acos(uw);
+	rset(ralph,alpha,2);
+	vecmat(u1,ralph,u2);
+	phi = -atan2(u[2],u[0]);
+	rset(rph,phi,1);
+	vecmat(u2,rph,v);
+	vw = v[0]*w[0] + v[1]*w[1] + v[2]*w[2];
+	if ((vw > -doub1) && (vw < doub1)) 
+		beta = acos(vw); 
+	else 
+		beta = doub0;
+	rset(rb,beta,axis);
+	matmul(rb,unro,rb);
+	matmul(ro,rb,rb);
+	vecmat(w,rb,w1);
+	if (w[1] > w1[1]) beta = -beta;
+	dospinby(xx,refell,beta,axis) ;
+}  /* dobalanc */
+/************************************************************/
+
+//void dodrag(void)
+var dodrag = function()
+/*
+   bend 'ellpsd' at joint 'join' with coordinates 'x'
+   about 'axis' of 'refell' to make 'ell1' touch the ground
+
+   called by  action,
+   calls      dospinby, save, restore, shift, doground,
+              setels, doangles,
+*/
+{
+	var jb,jc,jd;//int
+	var fixde;//int
+	var quadrant,qa,qb,qd;//int
+	var gap;//double
+	var yj;//double
+	var proptemp;//double
+	var xa,xb,xd;//double
+	var dx;//double
+	var y,ya,yb,yd;//double
+
+	proptemp = prop;
+	prop = doub1;
+/*
+	set rest of figure section, excluding ellpsd-ell1, 
+	to touch the ground -
+*/
+	fixde = 0;
+	if ( coel[join][0] == ellpsd ) fixde = coel[join][1];
+	if ( coel[join][1] == ellpsd ) fixde = coel[join][0];
+	if ( fixde == 0)
+	{
+		ok = 65;
+		console.log("\nOOPS dodrag: "+ename[ellpsd]+" not connected to joint "+jname[join]+"\n");
+		console.log("which joins  "+ename[coel[join][0]]+" and "+ename[coel[join][1]]+"\n");
+		bell ( 1, 1 );
+		prop = proptemp;
+	} /* joint does not connect specified ellipsoid */
+	else
+	{
+		setels(fixde,join);
+		gap = doground();
+		setels(fixde,-1);
+		shift ( doub0, -gap, doub0 );
+		yj = jnt[join][1] + minax[ell1];
+		if (yj <= minax[ellpsd])
+			console.log("dodrag snag : joint too low\n");
+		else
+		if ( yj > minax[ellpsd] )
+		{
+/*
+	which quadrant is centre of ell1 in wrt join -
+*/
+			quadrant = 0;
+			if ( jnt[join][0] > cen[ell1][0] ) quadrant += 1;
+			if ( jnt[join][2] > cen[ell1][2] ) quadrant += 2;
+			save ( );
+			xx[0] = jnt[join][0];
+			xx[1] = jnt[join][1];
+			xx[2] = jnt[join][2];
+			setels(ellpsd,join);
+			y = doground ( );
+//printf("dodrag  %d %f %s   %f %f %f\n",
+//f,y,ename[ell1],cen[ell1][0],cen[ell1][1],cen[ell1][2]);
+//printf("            %s   %f %f %f\n",
+//ename[fixde],cen[fixde][0],cen[fixde][1],cen[fixde][2]);
+//
+			setels(ellpsd,join);
+			xa = doub0;
+			qa = quadrant;
+			ya = y;
+//
+			xb = doub2;
+			qb = -1;
+			for (jb = 0; ((jb < 8)&&(qb != quadrant)); ++jb)
+			{
+				xb *= inv2;
+				restore(); 
+				dospinby ( xx, refell, xb, axis );
+				yb = doground ( );
+				qb = 0;
+				if ( jnt[join][0] > cen[ell1][0] ) qb += 1;
+				if ( jnt[join][2] > cen[ell1][2] ) qb += 2;
+//printf("dodragb %d %f %f %d\n",jb,xb,yb,qb);
+			}
+			xd = doub0;
+			if (ya*yb < doub0)
+			{
+				for (jc = 1; jc < 9; ++jc)
+				{
+					dx = (xb - xa)*inv2;
+					if ((ya*yb < doub0)||(ya*ya < yb*yb))
+						xb = xb - dx;
+					else 
+					{
+						xa = xb;
+						ya = yb;
+						xb = xb + dx;
+					}
+					restore();
+					dospinby ( xx, refell, xb, axis );
+					yb = doground ( );
+					qb = 0;
+					if ( jnt[join][0] > cen[ell1][0] ) qb += 1;
+					if ( jnt[join][2] > cen[ell1][2] ) qb += 2;
+//printf("dodragc %d %f %f %d\n",jc,xb,yb,qb);
+				} /* jc loop */
+//printf("dodragd %d %f %s   %f %f %f\n",
+//f,xb,ename[ell1],cen[ell1][0],cen[ell1][1],cen[ell1][2]);
+				qd = -1;
+				xd = xb*doub2;
+				for (jd = 0; ((jd < 8)&&(qd != quadrant)); ++jd)
+				{
+					xd *= inv2;
+					restore();
+					dospinby ( xx, refell, xd, axis );
+					yd = doground ( );
+					qd = 0;
+					if ( jnt[join][0] > cen[ell1][0] ) qd += 1;
+					if ( jnt[join][2] > cen[ell1][2] ) qd += 2;
+//printf("dodrage %d %f %f %d\n",jd,xd,yd,qd);
+				} /* jd */
+			} /* ya*yb < 0 */
+			restore();
+			prop = proptemp;
+//printf("dodragf %d %f %s   %f %f %f\n",
+//f,xd,ename[ell1],cen[ell1][0],cen[ell1][1],cen[ell1][2]);
+			dospinby ( xx, refell, prop*xd, axis );
+//printf("dodragg %d %f %s  %f %f %f\n\n",
+//f,prop*xd,ename[ell1],cen[ell1][0],cen[ell1][1],cen[ell1][2]);
+//printf("            %s   %f %f %f\n\n",
+//ename[fixde],cen[fixde][0],cen[fixde][1],cen[fixde][2]);
+			prdone = TRUE;
+		} /* joint OK */
+	}  /* connections  OK */
+} /* dodrag */
+/************************************************************/
+
+//double dcen(double d[3])
+var dcen = function(d)
+/*
+  find separation between ellipsoid centres
+
+  called by  doabut, sepn,
+*/
+{
+   var j;//int
+   var ans,dsq;//double
+
+   dsq = doub0 ;
+   for (j = 0; j < 3; ++ j)
+   {
+      d[j] = cen[ell1][j]-cen[ell2][j];
+      dsq += d[j]*d[j];
+   }
+   if (dsq > doub0) ans = sqrt(dsq); else ans = doub0;
+   return(ans);
+}  /* dcen */
+/************************************************************/
+
+//double newton(int n, double start, double a[])
+var newton = function(n, start, a)
+/*
+   solve the polynomial of degree (n-1):
+
+           n-1           n-2
+   a[n-1]*x    + a[n-2]*x    + ... a[1]*x + a[0] = 0
+
+   using 48 Newton-Raphson iterations starting at 'start'.
+
+   called by  surf,
+*/
+{
+	var x,xold,num,den;//double
+	var j,k;//int
+
+	x = start;
+	xold = doub2*start+doub1;
+	num = doub1;
+	for (j = 0;
+		((j < 48) && (num != doub0) && (x != xold)); ++j)
+	{
+		num = doub0;
+		den = doub0;
+		for (k = n-1; k >= 0; --k)
+		{
+			num = x*num + a[k];
+			if (k > 0) den = x*den + a[k]*double(k);
+		}
+		if (den == doub0)
+		{
+			ok = 57;
+			//TODO ERRORAGE Correct (mmultiple overloads more than %x marks)
+			printf("\nOOPS newton: ell2 %d, den %f\n",            
+			join,ell1,coel[join][0],coel[join][1]);
+			x = -doub1;
+			xold = -doub1;
+		}
+		else
+		{
+			xold = x;
+			if (den != doub0) x -= num/den;
+		}
+   }
+   return(x);
+}  /* newton */
+/*******************************************************/
+
+//void getmat(double mat[3][3], double tr[3][3], double untr[3][3],double trtr[3][3], double untrtr[3][3], int ell)
+var getmat = function(mat, tr, untr, trtr, untrtr, ell)
+/*
+   for ellipsoid 'ell', find its matrix 'mat',
+   also: its transformation matrix 'tr' and
+   its transpose 'trtr', and its inverse 'untr'
+   and its inverse transpose 'untrtr'.
+
+   called by  surf,
+   calls      rotget, matmul,
+*/
+{
+	//double r[3][3],unr[3][3];
+	//double diag[3][3];
+	//double undiag[3][3];
+	var r = get2DArray(3);
+	var unr = get2DArray(3);
+	var diag = get2DArray(3);
+	var undiag = get2DArray(3);
+	var j,k;//int
+/*
+   make the matrix -
+*/
+	rotget(r,unr,ell);
+	for (j = 0; j < 3; ++j)
+	{
+		for (k = 0; k < 3; ++k)
+		{
+			undiag[j][k] = doub0;
+			diag[j][k] = doub0;
+		}
+		if (ax[ell][j] == doub0)
+		{
+			ok = 60;
+			console.log("\nOOPS getmat: ell "+ell+", j "+j,+",  ax[ell][j] "+ax[ell][j]+"n");
+			return;
+		}
+		if (ax[ell][j] > doub0) 
+			undiag[j][j] = doub1/ax[ell][j];
+		else 
+			undiag[j][j] = doub0;
+		diag[j][j] = ax[ell][j];
+	}
+	matmul(undiag,unr,trtr);
+	matmul(r,undiag,untrtr);
+	matmul(untrtr,trtr,mat);
+/*
+  make the transformation matrices-
+*/
+	matmul(diag,unr,untr);
+	matmul(r,diag,tr);
+} /* getmat */
+/***********************************************/
+
+//void getaxes(double m[3][3], double axes[3], double r[3][3])
+var getaxes = function(m, axes, r)
+/*
+   from its matrix 'm', find the 3 semiaxes of an ellipsoid
+   and corresponding rotation matrix 'r'.
+
+   called by  surf,
+   calls      matmul,
+*/
+{
+	var lambda,mu,nu,nusq,numu;//double
+	//double s[3][3],t[3][3];
+	var s = get2DArray(3);
+	var t = get2DArray(3);
+	//double st[3][3],tmp[3][3];
+	var st = get2DArray(3);
+	var tmp = get2DArray(3);
+	var sn,cs,sig;//double
+	var a,b,c,abc;//double
+	var p,q;
+	var j,k,n;
+
+	for (j = 0; j < 3; ++j)
+	{
+		for (k = 0; k < 3; ++k)
+		{
+			r[j][k] = doub0;
+			t[j][k] = m[j][k];
+		}
+		r[j][j] = doub1;
+	}
+/*
+   iterate 3 times -
+*/
+	for (n = 0; n < 3; ++n)
+	{
+/*
+   find largest off-diagonal element -
+*/
+		a =  t[0][1]; if (a < doub0) a = -a;
+		b =  t[0][2]; if (b < doub0) b = -b;
+		c =  t[1][2]; if (c < doub0) c = -c;
+		abc = a; p = 0; q = 1;
+		if (b > abc)
+		{
+			abc = b;
+			q = 2;
+		}
+		if (c > abc)
+		{
+			abc = c;
+			p = 1;
+			q = 2;
+		}
+		if (abc != doub0)
+		{
+			lambda = -t[p][q];
+			mu = inv2*(t[p][p] - t[q][q]);
+			nusq = lambda*lambda + mu*mu;
+			if (nusq > doub0) 
+				nu = sqrt(nusq); 
+			else 
+				nu = doub0;
+			if (mu > doub0) 
+				sig = doub1; 
+			else 
+				sig = -doub1;
+			numu = nu + mu*sig;
+			if ((nu > doub0) && (numu > doub0)) 
+				cs = sqrt((numu)/(doub2*nu));
+			else 
+				cs = doub0;
+			if ((cs > doub0) && (nu > doub0)) 
+				sn = sig*lambda/(cs*doub2*nu);
+			else 
+				sn = doub0;
+			for (j = 0; j < 3; ++j)
+			{
+				for (k = 0; k < 3; ++k)
+				{
+					s[j][k] = doub0;
+				}
+				s[j][j] = doub1;
+			}
+			s[p][p] = cs;
+			s[q][q] = cs;
+			s[p][q] = sn;
+			s[q][p] = -sn;
+			for (j = 0; j < 3; ++j)
+			{
+				for (k = 0; k < 3; ++k)
+				{
+					st[j][k] = s[k][j];
+				}
+			}
+			matmul(st,t,tmp);
+			matmul(tmp,s,t);
+			matmul(st,r,r);
+		}
+	}
+	for (j = 0; j < 3; ++j)
+	{
+		if (t[j][j] == doub0)
+		{
+			ok = 60;
+			console.log("\nOOPS getaxes: ell1 "+ell1+",  ell2 "+ell2+",  j "+j+",  t[j][j] "+t[j][j]+"\n");
+		}
+		else
+			if (t[j][j] > doub0)
+				axes[j] = doub1/sqrt(t[j][j]);
+			else
+				axes[j] = doub0;
+	}
+}  /* getaxes */
+/******************************************************/
+
+//static void initsphere(void)
+var initsphere = function()
+/*
+    set up a unit sphere centred on the origin
+
+    called by  main, checkeys,
+*/
+{
+	var i,j,k,m,n;//int
+	var nlat,nlong;//int
+	var longi,lat;//double
+	var dlat,dlong;//double
+	var xval,yval,zval;//double
+	var ssmall;//double
+
+	if (nsph >= SMAX)
+	{
+		console.log("initsphere oops "+nsph+" > max, reset to "+SMAX+"\n");
+		nsph = SMAX-2;
+	}
+	if (nsph < SMIN)
+	{
+		console.log("initsphere oops "+nsph+" < min, reset to "+SMIN+"\n");
+		nsph = SMIN;
+	}
+	dlat = pi/nsph;	//TODO REVIEW (nsph was cast to double, might cause integer division)
+	dlong = dlat;
+	nlong = nsph+nsph;
+	nlat = nsph;
+	lat = -piby2;
+/*
+   set up vertices -
+*/
+	for (i = 0; i <= nlat; i++)
+	{
+		ssmall = cosf(lat);
+		yval = sinf(lat);
+		longi = 0;
+		for ( j = 0; j <= nlong; ++ j)
+		{
+			xval = ssmall*cosf(longi);
+			point[i][j][0] = xval;
+			zval = ssmall*sinf(longi);
+			point[i][j][1] = yval;
+			point[i][j][2] = zval;
+			longi += dlong;
+		}
+		lat += dlat;
+	}
+/*
+   set up faces and their normals -
+*/
+	m = 0;
+	for (i = 0; i < nlat; ++i)
+	{
+		for (j = 0; j < nlong; ++j)
+		{
+			for (k = 0; k < 3; ++k)
+			{
+				sph[m][0][k] = point[i][j+1][k];
+				sph[m][1][k] = point[i+1][j+1][k];
+				sph[m][2][k] = point[i+1][j][k];
+				sph[m][3][k] = point[i][j][k];
+				norm[m][k] = doub0;
+				for (n = 0; n < 4; ++n)
+					norm[m][k] += inv4*sph[m][n][k];
+			}
+			++m;
+			if (m >= 4*SMAX*SMAX)
+			{
+				console.log("initsphere faces ("+nsph+")  "+m+" > "+(4*SMAX*SMAX)+"\n");
+				getout(1);
+				if (ok == 1) return;
+			}
+		}
+	}
+	nfaces = m;
+}   /* initsphere */
+/*************************************************/
+
+//double surf(int ell1, int ell2)
+var surf = function(ell1, ell2)
+/*
+  return 0 if ell1 touches ell2
+  return -ve if they intersect
+  return +ve if they do not intersect
+
+    5 May 2007 skip if touch found
+   15 Sep 2006 return 0 if they touch
+   10 Sep 2006 use polyhedral vertices of ell1 
+               instead of ellipsoid
+   10 Sep 2006 surf() uses 2 parameters
+   17 Feb 1993 find distance between surfaces of ell1 and ell2
+               using Buckdales algorithm (giving answer in
+               transformed coordinates).
+    1 Oct 1981 using polyhedral vertices of ell1 and ell2
+               written: Don Herbison-Evans
+
+   called by  dotouch, cutting,
+   calls      sqr, setmat, vecmul, getout, initsphere
+*/
+{
+	var j;//int
+	var d12, dax, dmin;//double
+	//double c1[3],c2[3];
+	var c1 = Array();
+	var c2 = Array();
+
+	dax = minax[ell1] + minax[ell2];
+	dmin = doub0;
+//
+//   check separation of centres -
+//
+	for (j = 0; j < 3; ++j)
+	{
+		c1[j] = cen[ell1][j];
+		c2[j] = cen[ell2][j];
+		d12 = c1[j]-c2[j];
+		dmin += d12*d12;
+	}
+	dmin = sqrt(dmin);
+	return( dmin - dax);
+} /* surf */
+/***********************************/
+
+//void cutting ( void )
+var cutting = function()
+/*
+  find if any ellipsoids intersect that shouldnt.
+
+  called by  doframes,
+  calls setmat, vecmul, getout, initsphere, surf
+
+   15 Sep 2006 use surf() = 0 if ellipsoids touch
+   10 Sep 2006 moved innards to surf()
+   12 Aug 2006 fixed initsphere and setmat
+    8 Aug 2006 Don Herbison-Evans
+*/
+{
+	var j,k;//int
+	var s,smin,smax;//int
+	var ncut,ntemp;//int
+	var el1,el2;//int
+	var dmin;//double
+	//double m[3][3],m1[3][3],unm1[3][3];
+	var m = get2DArray(3);
+	var m1 = get2DArray(3);
+	var unm1 = get2DArray(3);
+	//double e1c[EMAX][3];
+	var e1c = get2DArray(EMAX);
+	//double c1[3];
+	var c1 = Array();
+	var key;//char
+
+	ncut = 5;
+	ntemp = nsph;
+	nsph = ncut;
+	if (2*nsph*nsph > EMAX)
+		nsph = parseInt(sqrt((EMAX-1)*inv2));//TODO REVIEW (EMAX-1 was cast to double, may cause integer division; Entire thing was cast to int, not sure if parseInt() works the same way)
+	printf("cuttinga %d %d\n",ntemp,ncut);
+	initsphere ( );
+	for (el1 = 1; el1 < (ne-1); ++el1)
+	{
+		setmat ( el1, m, m1, unm1 );
+		for (j = 0; j < 3; ++j)
+			c1[j] = cen[el1][j];
+		s = 0;
+		for (j = 0; j <= nsph; ++j)
+		{
+			for ( k = 0;  k <= (nsph+nsph); ++k)
+			{
+				e1c[s][0] = point[j][k][0];
+				e1c[s][1] = point[j][k][1];
+				e1c[s][2] = point[j][k][2];
+				vecmul ( e1c, unm1, s);
+				e1c[s][0] += c1[0];
+				e1c[s][1] += c1[1];
+				e1c[s][2] += c1[2];
+				++s;
+				if (s >= EMAX)
+				{
+					console.log("snag in 'cutting'\n");
+					console.log(" no. vertices "+(2*nsph*nsph)+", max "+EMAX+"\n");
+					ok = 66;
+					getout(ok);
+				}
+			} /* k loop */
+		} /* j loop */
+		smax = s;
+		smin = -1;
+		for (el2 = el1+1; el2 < ne; ++el2)
+		{
+			if (forbid[el1][el2] == true)
+			{
+				dmin = surf(el1, el2);
+				if (dmin < doub0)
+				{
+					console.log("frame "+f+": ellipsoid "+ename[el1]+" cuts ellpsoid "+ename[el2]+"\n");
+					console.log("\n carry on regardless? Hit 'enter' for Yes, 'no' then 'enter' for No: ");
+					key = getchar();
+					if ( key == '\n' )
+					{
+						for (j = 0; j < ne; ++j)
+							for (k = 0; k < ne; ++k)
+								forbid[j][k] = false;
+					}
+					else
+					{
+						pause = true;
+						fstop = f-1;
+					}
+				} // dmin
+			} /* ell2 forbidden */
+		} /* el2 */
+	} /* el1 */
+	nsph = ntemp;
+	console.log("cuttingb "+el1+" "+el2+"\n");
+	initsphere ( );
+} /* cutting */
+/******************************************************/
+
+//double sepn(void)
+var sepn = function()
+/*
+   find distance between surfaces of ell1 and ell2.
+
+   called by  dotouch, fun, fndmin, doabut, try,
+   calls      dcen, surf,
+*/
+{
+   var dmid;//double
+   var ans,minsep;//double
+   //double d[3];
+   var d = Array();
+/*
+   find bounds on separation -
+*/
+	dmid = dcen(d);
+	minsep = dmid-minax[ell1]-minax[ell2];
+	if (minsep <= doub0)
+	{
+		ans = -doub1;
+	}
+	else
+	{
+		ans = surf(ell1,ell2);
+		if (ans < doub0) ans = -doub1;
+	}
+	return(ans);
+} /* sepn */
+/**********************************************/
+
+//double fun(double xarg)
+var fun = function(xarg)
+/*
+   called by  solve,
+   calls      setels, dospinby, doground, restore, sepn,
+              domoveby,
+*/
+{
+   var ans;//double
+   //double dx[3];
+   var dx = Array();
+
+	ans = doub0;
+	if (t == drag_keyword_code)
+	{
+		setels(ellpsd,join);
+		restore();
+		dospinby(xx,refell,xarg,axis);
+		ecount = 1; elist[0] = ell1;
+		ans = doground();
+		return(ans);
+	}
+	else
+	if (t == abut_keyword_code)
+	{
+		dx[0]=doub0;
+		dx[1]=doub0;
+		dx[2]=doub0;
+		dx[axis] = xarg;
+		domoveby(dx[0],dx[1],dx[2],refell);
+		ans = sepn();
+		if (ok != 0) 
+			return(doub0);
+		restore();
+		return(ans);
+	}
+	else
+	{
+		ok = 59;
+		return(doub0);
+	}
+} /* fun */
+/*******************************************/
+
+//double solve(double a, double b, int n)
+var solve = function(a, b, n)
+/*
+   find a zero of 'fun()' in the range 'a' to 'b'
+   to an accuracy of 1.0 on fun, using at most 'n' iterations.
+
+   called by  doabut,
+   calls      fun,
+*/
+{
+	var valab,vala,valb;//double
+	var angab,anga,angb;//double
+	var dval;//double
+	var k;//int
+
+	angab = a;
+	anga = a; 
+	vala = fun(a);
+	if ((vala > -doub1) && (vala < doub1)) return(angab);
+	if (ok != 0) return(angab);
+	angab = b;
+	angb = b; 
+	valb = fun(b);
+	if (ok != 0) return(angab);
+	if ((valb > -doub1) && (valb < doub1)) return(angab);
+	if (vala*valb > doub0)
+	{
+		if (vala > doub0)
+		{
+			if (vala < valb) angab = a;
+				else angab = b;
+		}
+		else
+		{
+			if (vala < valb) angab = b;
+				else angab = a;
+		}
+		anga = doub0; angb = doub0;
+		valab = doub0; vala = doub0; valb = doub0;
+		return(angab);
+	}
+	if (vala > valb)
+	{
+		valab = vala;
+		vala = valb;
+		valb = valab;
+		angab = anga;
+		anga = angb;
+		angb = angab;
+	}
+	for (k = 0; k < n; ++k)
+	{
+		dval = vala-valb;
+		if (dval < doub0) dval = -dval;
+		if (dval < doub1) return(angab);
+		angab = inv2*(anga+angb);
+		valab = fun(angab);
+		if (ok != 0) return(angab);
+		if (valab < doub0)
+		{
+			anga = angab;
+			vala = valab;
+		}
+		else
+		{
+			angb = angab;
+			valb = valab;
+		}
+	}
+} /* solve */
+/*******************************************/
+
+//double angsepn ( double xx[3], int ell1, int ell2 )
+var angsepn = function(xx, ell1, ell2 )
+/*
+   find approx angular separation in radians at xx
+   of ell1 and ell2 using minax 
+
+   called by  dotouch
+   calls sqr
+
+	 5 May 2007  zero if overlapping well
+   16 Sep 2006  xx,ell1,ell2 parameters instead of global
+*/
+{
+	var dmin,dsep;//double
+	var asep;//double
+	var dist1, dist2;//double
+
+	dmin = minax[ell1] + minax[ell2];
+	dsep = sqrt (sqr ( cen[ell1][0] - cen[ell2][0] )
+		+ sqr ( cen[ell1][1] - cen[ell2][1] )
+		+ sqr ( cen[ell1][2] - cen[ell2][2] ) );
+	if (dsep <= dmin)
+		asep = doub0;
+	else
+	{
+		dist1 = sqrt( sqr ( xx[0] - cen[ell1][0] )
+			 + sqr ( xx[1] - cen[ell1][1] )
+			 + sqr ( xx[2] - cen[ell1][2] ) );
+
+		dist2 = sqrt( sqr ( xx[0] - cen[ell2][0] )
+			 + sqr ( xx[1] - cen[ell2][1] )
+			 + sqr ( xx[2] - cen[ell2][2] ) );
+
+		asep = (dsep + dsep) / (dist1 + dist2);
+	}
+	return( asep );
+} /* angsepn */
+/************************************************/
+
+//void dotouch(void)
+var dotouch = function()
+/*
+  make ellipsoid 'ell1' come as close as possible to 'ell2'
+  by bending ellipsoid 'ellpsd' at the joint at point 'x'
+  about 'axis' of ellipsoid 'refell'.
+
+  called by  action,
+  calls      angsepn, surf, save, restore, dospinby, sqr,
+
+  	5 May 2007  skip if overlapping well already
+  16 Sep 2006  find min of square of surf() penetration
+  10 Sep 2006  surf() uses 2 parameters
+   1 Oct 1981  written Don Herbison-Evans
+*/
+{
+	var angj, angk;//double
+	var arange;//double
+	var dang;//double
+	var gap, g1, gmin;//double
+	var pro;//double
+	var samples = 10;//int
+	var iterations = 5;//int
+	var j;//int
+	var jend;//int
+	var jmin;//int
+	var jstart;//int
+	var k;//int
+
+	save ();
+	pro = prop;
+	prop = doub1;
+	arange = angsepn ( xx, ell1, ell2 );
+	jstart = -samples / 2;
+	jend = jstart + samples;
+	angk = doub0;
+	for ( k = 0; k < iterations; ++k )
+	{
+		restore ();
+		dang = arange / samples;//TODO REVIEW samples was cast to double
+		angj = angk + dang * jstart;//TODO REVIEW jstart was cast to double
+		dospinby ( xx, refell, angj, axis );
+		gap = sqr ( surf ( ell1, ell2 ) );
+		g1 = gap;
+		gmin = gap;
+		jmin = jstart;
+		/*
+		seek minimum of gap,
+		*/
+		for ( j = jstart + 1; ( j < jend + 1 ); ++j )
+		{
+			restore ();
+			angj = angk + dang * j;//TODO REVIEW j was cast to double
+			dospinby ( xx, refell, angj, axis );
+			gap = sqr ( surf ( ell1, ell2 ) );
+			if ( gap < gmin )
+			{
+				jmin = j;
+				gmin = gap;
+			}
+		} /* j */
+		if ( ( jmin != jstart ) && ( jmin != jend ) )
+			arange = dang + dang;
+		angk += dang*jmin;//TODO REVIEW jmin was cast to double
+	} /* k */
+	prop = pro;
+	restore ();
+	angj = angk + dang * jmin;//TODO REVIEW jmin was cast to double
+	dospinby ( xx, refell, prop*angj, axis );
+} /* dotouch */
+/************************************************************/
+
+//double trying(double a)
+var trying = function(a)
+/*
+     function to be found a minimum of,
+     called from doabut.
+
+     called by  fndmin,
+     calls      domoveby, sepn, restore,
+*/
+{
+	//double dx[3]
+	var dx = array();
+	var s;//double
+
+	if (t == abut_keyword_code)
+	{
+		dx[0] = doub0; dx[1] = doub0; dx[2] = doub0;
+		dx[axis] = a;
+		domoveby(dx[0],dx[1],dx[2],refell);
+		s = sepn();
+		restore();
+	}
+	else
+	{
+		ok = 62;
+		s = doub0;
+		console.log("\nOOPS trying: doabut not calling it!\n");
+	}
+	return(s);
+} /* trying */
+/***************************************************/
+
+//double fndmin(double a, double b, int n)
+var fndmin = function(a, b, n)
+/*
+   finds the minimum value of 'try'
+   in the range 'a' to 'b' using at most 'n' iterations.
+
+   called by  dotouch,
+   calls      try,
+*/
+{
+	var trya,tryb,tryab;//double
+	var olda,oldb;//double
+	var mina,minb;//double
+	var k;//int
+
+	tryab = doub0;
+	olda = a; oldb = b;
+	for (k = 0; k < n; ++k)
+	{
+		trya = olda + (oldb-olda)*inv3;
+		mina = trying(trya);
+		if (ok != 0) return(tryab);
+		tryb = oldb - (oldb-olda)*inv3;
+		minb = trying(tryb);
+		if (ok != 0) return(tryab);
+		if (mina < minb) oldb = tryb;
+			else olda = trya;
+	}
+	if (mina < minb) tryab = trya;
+		else tryab = tryb;
+   
+} /* fndmin */
+/*******************************************/
+
+//TODO REVIEW (GOTOs replaced with function)
+//void doabut(void)
+var doabut = function()
+/*
+   move figure containg ell1 to touch ell1 to ell2
+   along direction parallel to given axis of
+   reference ellipsoid.
+
+   called by  prfrm,
+   calls      save, restore, sepn, dcen,
+              rotget, vecmul, domoveby, solve, fndmin,
+*/
+{
+	var j;//int
+	var steps;//int
+	var min,max;//double
+	var mov;//double
+	var dold,dnew;//double
+	var xold,xnew;//double
+	var forward,back;//double
+	var shft;//double
+	var dist;//double
+	var cdist;//double
+	//double d[3];
+	var d = Array();
+	//double dx[3];
+	var dx = Array();
+	//double v[EMAX][3];
+	var v = get2DArray(EMAX);
+	//double r[3][3],unr[3][3];
+	var r = get2DArray(3);
+
+	save();
+	min = minax[ell1];
+	if (min < minax[ell2]) min = minax[ell2];
+	max = maxax[ell1];
+	if (max < maxax[ell2]) max = maxax[ell2];
+	if ((max > doub0) && (lg2 != doub0)) 
+		steps = int(doub2 + log(max)/lg2);
+	else 
+		steps = 2;
+	dist = sepn();
+	if (ok != 0) return;
+	for (j = 0; j < 3; ++j)
+		dx[j] = doub0;
+/*
+   do they already just touch -
+*/
+	if (dist == doub0) 
+		return;
+	else
+	if (dist < doub0)
+/*
+   they overlap already, so seek shortest way to separate them -
+*/
+	{
+		mov = doub2*max;
+		dx[axis] = mov;
+		domoveby(dx[0],dx[1],dx[2],refell);
+		forward = sepn();
+		if (ok != 0) return;
+		restore();
+		dx[axis] = -mov;
+		domoveby(dx[0],dx[1],dx[2],refell);
+		back = sepn();
+		if (ok != 0) return;
+		restore();
+		if ((back < doub0) && (forward < doub0))
+		{
+			ok = 58;
+			printf("doabut: ell1 %d,  ell2 %d,  back %f,  forward %f",            
+			  ell1,ell2,back,forward);
+			return;
+		}
+		else
+		if (back > forward) mov = -mov;
+		shft = solve(doub0,mov,steps);
+	}
+	else
+/*
+  try to overlap them -
+*/
+	{
+		cdist = dcen(d);
+		for (j = 0; j < 3; ++ j)
+			v[0][j] = d[j] ;
+		rotget(r,unr,refell) ;
+		vecmul(v,unr,0) ;
+		mov = -v[0][axis];
+		dnew = doubmax;
+		xold = mov - max - min;
+		for (xnew = mov-max; xnew < (mov+max+min); xnew += min*inv2)
+		{
+			dx[axis] = xnew;
+			domoveby(dx[0],dx[1],dx[2],refell);
+			dold = dnew;
+			dnew = sepn();
+			if (ok != 0) return;
+			restore();
+			if ((mov > doub0) && (dnew < doub0)) gotit();
+			if ((mov < doub0) && (dnew > dold)) gotit();
+			xold = xnew;
+		}
+		shft = xnew;
+		return;
+	}
+	
+/*
+   they wont overlap so just bring them closest together -
+*/
+	function gotit(){
+		if ((dold > doub0) && (dnew > doub0)){
+			shft = fndmin(xold-min,xnew,steps);
+			restore();
+			dx[axis] = prop*shft;
+			domoveby(dx[0],dx[1],dx[2],refell);
+		}
+/*
+   they will overlap -
+*/
+		shft = solve(xold,xnew,steps);
+/*
+   move proportion to abut -
+*/
+		restore();
+		dx[axis] = prop*shft;
+		domoveby(dx[0],dx[1],dx[2],refell);
+	}
+} /* doabut */
+/***************************************************/
+/* 
+   drawel.cpp version 42
+
+   subroutines -
+      getout      - exit keeping window open
+      initialise  - initialise variables and constants
+      openfile    - read file root and open input file
+      action      - selects an action to perform
+      doperfrm    - performs each action in turn for a given frame
+      doframes    - simulates and stores each frame in turn
+      help        - list interactive commands
+      initsphere  - set up polyhedral approximation to a sphere
+      dopause     - do nothing for a while
+      donum       - write numbers on the animation window
+      image       - draw the ellipsoids
+      animate     - update interactive variables
+      checkeys    - respond to keyboard commands
+      initgraphics- initialise graphics window
+      main       - run the show
+
+/***********************************************/
+
+//TODO REVIEW (File opening over http - I'm FAIRLY sure this isn't needed)
+//void openfile(void)
+//var openfile = function()
+/*
+   open the nudes file written by linter routine
+
+   called by main,
+*/
+/*{
+	if ((infile = fopen(nudesname,"r")) == NULL)
+	{
+		if (infile) fclose(infile);
+		printf("\n\n "+nudesname+" oops?\n");
+		ok = 2;
+		getout(1);
+		if (ok == 1) goto rtrn;
+	}
+	printf("\n   opened %s\n",nudesname);
+rtrn: ;
+}*/ /* openfile */
+/***************************************/
+
+//void dolighting ( double x, double y, double z )
+var dolighting = function( x, y, z )
+/*
+change of lighting
+*/
+{
+	lighting_rgb[0] = x / 255.0;
+	lighting_rgb[1] = y / 255.0;
+	lighting_rgb[2] = z / 255.0;	
+} /* dolighting */
+/******************************************/
+
+//void doopacity ( void )
+var doopacity = function()
+/*
+	change of opacity
+
+	calls elground, rotput, rset, setnup
+*/
+{
+	var k,n;//int
+	var y, phi;//double
+	//double r[3][3];
+	var r = get2DArray(3);
+	//double axe[3];
+	var axe = Array(3);
+
+	// run thru ellipsoids to shadow each in turn -
+
+	k = ne;
+	for ( n = 1; n < ne; ++n )
+	{
+		phi = setnup ( n, axe );
+		y = elground ( n );
+		if ( y > doub0 )
+		{
+			cen[k][0] = cen[n][0];
+			cen[k][1] = -inv5;
+			cen[k][2] = cen[n][2];
+			ax[k][0] = axe[0];
+			ax[k][1] = inv5;
+			ax[k][2] = axe[2];
+			rset ( r, phi, 1 );
+			rotput ( r, k );
+			col[k][0] = doub1;
+			col[k][1] = doub1;
+			col[k][2] = doub1;
+			col[k][3] = 100;  // transparency 0-100 flags 101-255
+			
+			++k;
+		} /* y > 0 */
+	}	  /* end n loop */
+	ne = k;
+} /* doopacity */
+/*****************************************/
+
+//void doangles(int el, int re, double v[3])
+var doangles = function(el, re, v)
+/*
+	store the angles of 'el' relative to 're' in 'val' array.
+	in degrees.
+
+	called by action, dodrag
+	calls  matmul, rotget, rotput, mkang,
+
+	14 Aug 2006  answers put in 3 element array
+*/
+{
+	//double mvro[3][3],mvunro[3][3];
+	var mvro = get2DArray(3);
+	var mvunro = get2DArray(3);
+	//double stro[3][3],stunro[3][3];
+	var stro = get2DArray(3);
+	var stunro = get2DArray(3);
+	//double r[3][3];
+	var r = get2DArray(3);
+
+	rotget(stro,stunro,re);
+	rotget(mvro,mvunro,el);
+	matmul(stunro,mvro,r);
+	rotput(r,EMAX);
+	mkang(EMAX);
+	v[0] = ang[0] * degree;
+	v[1] = ang[1] * degree;
+	v[2] = ang[2] * degree;
+	if ((v[0] > doub179) && (v[0] < doub181))
+	{
+		v[0] -= doub180;
+		v[2] = -v[2];
+	}
+	if (v[1] > doub180) v[1] -= doub360;
+}  /* doangles */
+/***********************************************/
+
+//void dogrowto ( double x, double y, double z )
+var dogrowto = function(x, y, z )
+/*
+	find distance between extremal points in each direction 
+	and scale to desired output
+
+	growto  (fname)  (referenceellipsoid) (axis) (size)
+		where size =
+		(variablename)
+		(value)
+	makes the total extent of the nominated figure in its current articulated
+	state equal to the value of size, in the direction parallel to the nominated
+	axis of the reference ellipsoid (tangent plane to tangent plane, normal to
+	this axis direction).
+
+	called by  action
+	calls dogroell, shift, bell,
+*/
+{
+	//double cen_min[3];
+	var cen_min = Array();
+	//double cen_max[3];
+	var cen_max = Array();
+	//double cen_dif[3];
+	var cen_dif = Array();
+	//double cen_scale[3];
+	var cen_scale = Array();
+
+	var e;//int
+	var j;//int
+	var n;//int
+
+	for ( j = 0; j < 3; ++j )
+	{
+		cen_min[j] = doubmax;
+		cen_max[j] = -doubmax;
+	}
+
+	shift( -x, -y, -z );
+	for ( n = 0; n < ecount; ++ n )
+	{
+		e = elist[n];
+		maxax[e] = ax[e][0];
+		minax[e] = ax[e][0];
+		for ( j = 1; j < 3; ++j )
+		{
+			if ( ax[e][j] > maxax[e] ) maxax[e] = ax[e][j];
+			if ( ax[e][j] < minax[e] ) minax[e] = ax[e][j];
+		}
+		for ( j = 0; j < 3; ++j )
+		{
+			if ( cen[e][j] > cen_min[j] ) cen_min[j] = cen[e][j];
+			if ( cen[e][j] < cen_max[j] ) cen_max[j] = cen[e][j];
+		}
+	}
+
+	for ( j = 0; j < 3; ++j )
+	{
+		cen_dif[j] = -( cen_max[j] - cen_min[j] );
+		cen_scale[j] = 1.0;
+		if ( cen_dif[j] > 0.0 ) cen_scale[j] = factor[j] / cen_dif[j];
+		factor[j] = cen_scale[j];
+	}
+
+	for ( n = 0; n < ecount; ++ n )
+	{
+		e = elist[n];
+		dogroell ( factor, e, cen );
+		dogroell ( factor, e, ax );
+		maxax[e] = ax[e][0];
+		minax[e] = ax[e][0];
+		for ( j = 1; j < 3; ++j )
+		{
+			if ( ax[e][j] > maxax[e] ) maxax[e] = ax[e][j];
+			if ( ax[e][j] < minax[e] ) minax[e] = ax[e][j];
+		}
+	}
+
+	for ( n = 0; n < jcount; ++ n )
+		dogroell ( factor, jlist[n], jnt );
+
+	shift ( x, y, z );
+	return;
+} /* dogrowto */
+/******************************************/
+
+//void action ( int keyword_code )
+var action = function( keyword_code )
+/*
+  decode and do an action keyword_code.
+
+  called by  doperfrm,
+  calls      doabut, doangles, doattach, dobalanc, dobend,
+		docolour, dodetach, dodrag, dogroell, dogrofig, dogrojnt,
+		dogrowto, doground, domoveby, domovjnt, dolighting,
+		doopacity, doplace, dospinby, dospinto, dotouch,
+		enquir, setobs, shift,
+
+	 1 Sep 2006  allow world world means allow any intersection 
+	14 Aug 2006  altered parameters of doangles()
+	13 Aug 2006  added allow and forbid
+
+*/
+{
+	var min;//double
+	//double v[3];
+	v = Array();
+	var j,k;//int
+
+	if ( ( keyword_code < 7 ) || ( keyword_code > NKEYS ) )
+	{
+		/*
+		int figure_keyword_code  =  1;
+		int ellips_keyword_code  =  2;
+		int joint_keyword_code   =  3;
+
+		int accele_keyword_code  =  5;
+		int subrou_keyword_code  =  6;
+		*/
+
+		ok = 24;
+		printf ( "action type %d out of range %d %d\n", keyword_code, 7, NKEYS );
+	}
+
+	if ( keyword_code == balanc_keyword_code ) dobalanc();
+
+	if ( keyword_code == attach_keyword_code ) doattach();
+
+	if ( keyword_code == detach_keyword_code ) dodetach();
+
+	if ( keyword_code == grofig_keyword_code ) dogrofig ( xx[0], xx[1], xx[2] );
+
+	if ( keyword_code == spinto_keyword_code ) dospinto ( xx, refell, ang, prop );
+
+	if ( keyword_code == moveby_keyword_code ) domoveby ( frac * xx[0], frac * xx[1], frac * xx[2], refell );
+
+	if ( keyword_code == add_keyword_code ) val[var0] = xx[0] + xx[1];
+
+	if ( keyword_code == touch_keyword_code ) dotouch ();
+
+	if ( keyword_code == spinby_keyword_code ) dospinby ( xx, refell, ang[0] * frac, axis );
+
+	if ( keyword_code == ground_keyword_code )
+	{
+		min = doground ();
+		shift ( doub0, -prop * min, doub0 );
+	}
+	if ( keyword_code == bendby_keyword_code ) dospinby ( xx, refell, ang[0] * frac, axis );
+
+	if ( keyword_code == set_keyword_code ) val[var0] = varval;
+
+	if ( keyword_code == bendto_keyword_code ) dospinto ( xx, refell, ang, prop );
+
+	if ( keyword_code == repeat_keyword_code )
+	{
+		ok = 25;
+		console.log("non-existent action "+keyword_code+"\n");
+	}
+	if ( keyword_code == quadra_keyword_code )
+	{
+		ok = 26;
+		console.log("non-existent action "+keyword_code+"\n");
+	}
+	if ( keyword_code == linear_keyword_code )
+	{
+		ok = 27;
+		console.log("non-existent action "+keyword_code+"\n");
+	}
+	if ( keyword_code == observ_keyword_code ) setobs();
+
+	if ( keyword_code == moveto_keyword_code ) shift ( prop * xx[0], prop * xx[1], prop * xx[2] );
+
+	if ( keyword_code == invert_keyword_code )
+	{
+		if ( val[var0] != doub0 )
+		{
+			val[var0] = doub1 / val[var0];
+		}
+		else
+		{
+			val[var0] = doub0;
+		}
+	}
+	if ( keyword_code == groell_keyword_code ) dogroell ( factor, ellpsd, ax );
+
+	if ( keyword_code == grojnt_keyword_code ) dogrojnt();
+
+	if ( keyword_code == growto_keyword_code ) dogrowto( xx[0], xx[1], xx[2] );
+
+	if ( keyword_code == angles_keyword_code )
+	{
+		doangles ( ellpsd, refell, v );
+		val[var0] = v[0]; val[var1] = v[1]; val[var2] = v[2];
+	}
+
+	if ( keyword_code == centre_keyword_code || keyword_code == center_keyword_code) enquir ( ellpsd, cen );
+
+	if ( keyword_code == flex_keyword_code ) dobend ( ang[0] * frac, 0 );
+
+	if ( keyword_code == rotate_keyword_code ) dobend ( ang[0] * frac, 1 );
+
+	if ( keyword_code == abduct_keyword_code ) dobend ( ang[0] * frac, 2 );
+
+	if ( keyword_code == negate_keyword_code ) val[var0] = -val[var0];
+
+	if ( keyword_code == subtra_keyword_code ) val[var0] = xx[0] - xx[1];
+
+	if ( keyword_code == divide_keyword_code )
+	{
+		if ( xx[1] == doub0 )
+		{
+			ok = 30;
+			console.log("action: divide, keyword_code "+keyword_code+",  EMAX-var0-1 "+(EMAX-var0-1)+",  xx[1] "+xx[1]+"");
+		}
+		else
+		{
+			val[var0] = xx[0] / xx[1];
+		}
+	}
+	if ( keyword_code == multip_keyword_code ) val[var0] = xx[0] * xx[1];
+
+	if ( keyword_code == 45 )
+	{
+		ok = 28;
+		console.log("action: non-existent action "+keyword_code+"\n");
+	}
+	if ( keyword_code == cubic_keyword_code )
+	{
+		ok = 29;
+		console.log("action: non-existent action "+keyword_code+"\n");
+	}
+	if ( keyword_code == place_keyword_code ) doplace();
+
+	if ( keyword_code == axes_keyword_code ) enquir ( ellpsd, ax );
+
+	if ( keyword_code == linkx_keyword_code ) enquir ( join, jnt );
+
+	if ( keyword_code == colour_keyword_code ||
+		keyword_code == color_keyword_code ) docolour ( prop );
+
+	if ( keyword_code == print_keyword_code ) {
+		console.log("frame "+f+", "+(vname[EMAX-var0-1])+" "+val[var0]+"\n");
+	}
+	
+	if ( keyword_code == textur_keyword_code ) docolour ( doub1 );
+
+	if ( keyword_code == drag_keyword_code ) dodrag ();
+
+	if ( keyword_code == abut_keyword_code ) doabut ();
+
+	if ( keyword_code == movjnt_keyword_code ) domovjnt ();
+
+	if ( keyword_code == opacty_keyword_code ) doopacity ();
+
+	if ( keyword_code == lghtng_keyword_code ) dolighting ( xx[0], xx[1], xx[2] );
+
+	if ( keyword_code == allow_keyword_code ) 
+	{
+		//printf("actionb allow %s %s\n",ename[ell1],ename[ell2]);
+		forbid[ell1][ell2] = false;
+		forbid[ell2][ell1] = false;
+		if ((ell1+ell2) == 0)
+		{
+			for (j = 0; j < EMAX; ++j)
+				for (k = 0; k < EMAX; ++k)
+					forbid[j][k] = false;
+		}
+	}
+	if ( keyword_code == forbid_keyword_code ) 
+	{
+		forbid[ell1][ell2] = true;
+		forbid[ell2][ell1] = true;
+		//printf("actionc forbid %s %s\n",ename[ell1],ename[ell2]);
+	}
+}  /* action */
+/*********************************************************/
+
+//void doperfrm(int sub, int fr, int fstart, int fend)
+var doperfrm = function(sub, fr, fstart, fend)
+/*
+   perform actions of subroutine 'sub' for frame 'fr'
+   between frames 'fstart' and 'fend'
+
+   called by  doframes,
+   calls      getvalu, setfrc, setper, action,
+*/
+{
+	var frame;//int
+	var newsub;//int
+	var p;//int
+	var pstart,pend;v
+	var fsstart;//int
+	var fstrt,fstp;//int
+	var fsubstart ;//int
+
+	pstart = subact[sub][0] ;
+	pend = subact[sub][1] ;
+/*
+  find 'subfrm', the earliest formal frame number in 
+  current subroutine ignoring unset variable 
+  frame numbers ( == -1) -
+*/
+	fsubstart = MAXINT ;
+	for (p = pstart ; p <= pend ; ++p )
+	{
+		fsstart = getvalu(frstart[p]) ;
+		if (ok != 0){
+			snag();
+			return;
+		}
+		if (fsstart >= 0)
+		{
+			fsstart *= fast ;
+			if (fsstart < fsubstart) fsubstart = fsstart ;
+		}
+	}
+	frame = fr + fsubstart - fstart;
+	if (fr >= fstop) fstop = fr+1;
+/*
+  run through actions in the subroutine -
+*/
+	for (p = pstart; p <= pend; ++p)
+	{
+		pp = p;
+		t = type[p] ;
+		if ((t != stop_keyword_code)
+			&&(t != subrou_keyword_code)
+			&&(t != endsub_keyword_code))
+		{
+			fstrt = getvalu(frstart[p]) ;
+			if (fstrt < 0)
+			{
+				ok = 46;
+				console.log("doperfrm: start "+start+"\n");
+			}
+			if (ok != 0){
+				snag();
+				return;
+			}
+			fstp = getvalu(frstop[p]) ;
+			if (fstp < fstrt)
+			{
+				ok = 47 ;
+				console.log("doperfrm: fstrt "+fstrt+",  fstp "+fstp+"\n");
+			}
+			if (ok != 0){
+				snag();
+				return;
+			}
+			if (fstrt == fstp) ++fstp;
+			fstrt *= fast ;
+			fstp *= fast ;
+			if ((fstp > frame) && (fr < fend)) ++more;
+			if ((frame > fstrt) && (frame <= fstp))
+			{
+				if (t == call_keyword_code)
+				{
+					newsub = getvalu(pf[p][0]);
+					if ((newsub <= 0) || (newsub > PMAX))
+					{
+						ok = 8 ;
+						console.log("doperfrm: newsub "+newsub+",  PMAX "+PMAX+"\n");
+						snag();
+						return;
+					}
+					if (distrn[p] == call_keyword_code)
+						doperfrm(newsub,frame,fstrt,fstp);
+					else
+						doperfrm(newsub,frame,frame-1,frame);
+					if (ok != 0) return; ;
+				}
+/*
+  if not a subroutine call, then do normal action -
+*/
+				else
+				{
+					setfrc(frame,fstrt,fstp) ;
+					if (ok != 0){
+						snag();
+						return;
+					}
+					setper(t);
+					if (ok != 0){
+						snag();
+						return;
+					}
+					action(t);
+					if (ok != 0){
+						snag();
+						return;
+					}
+				} /* t not call */
+			} /* frame f in range of action p */
+		} /* t not start or end of subroutine */
+	} /* p */
+	return;
+/*
+  snag-
+*/
+	function snag(){
+		console.log("error in doperfrm, frame "+f+", action "+p+1); 	  getout(ok+"\n");
+		getout(ok);
+	}
+}  /* doperfrm */
+/*********************************************/
+
+//void doframes(void)
+var doframes = function()
+/*
+  calls and performs the actions for each frame in turn.
+
+  called by  main,
+  calls      doperfrm, store3,
+*/
+{
+	var j;//int
+
+	t = 1;
+	axis = 1;
+	join = 1;
+	var0 = 1;
+	var1 = 1;
+	var2 = 1;
+	fig = 1;
+	ellpsd = 1;
+	refell = 1;
+	ell1 = 1;
+	ell2 = 1;
+	for (j = 0; j < 3; ++j)
+	{
+		newcol[j] = 0;
+		oldang[j] = doub0;
+		ang[j] = doub0;
+		xx[j] = doub0;
+		factor[j] = doub1;
+	}
+	varval = doub0;
+/*
+  simulate and store each frame of movie-
+*/
+	for (f = 1; more > 0; ++f)
+	{
+		more = 0;
+		doperfrm(0,f,0,fstop);
+		if ((fslow == 1) || (f%fslow == 1))
+			store3(f);
+	}
+	if (vstart > fstart) fstart = vstart;
+	if ((vstop > 0) && (vstop < fstop)) fstop = vstop;
+} /* doframes */
+/*********************************************/
+
+//void help(void);
+var help = function()
+/*
+   list the interactive commands
+ 
+   called by  main, checkeys,
+*/
+{
+  console.log("\n\n******* TO ACTIVATE THESE: CLICK IN THE ANIMATION WINDOW FIRST *******\n");
+  console.log("\n  Interactive commands :-\n\n");
+ 
+  console.log("\n\n   animation parameters\n");
+  console.log("    i - freeze (opp. of 'a')\n"); 
+  console.log("    a - continue animating (opp. of 'i')\n");
+  console.log("    c - continue through restart at full rate (opp. of 'p')\n");
+  console.log("    p - pause on first and last frames (opp. of 'c')\n"); 
+  console.log("    b - if frozen, go back 1 frame else run backwards (opp. of 'f')\n");
+  console.log("    f - if frozen, go forward 1 frame else run forwards (opp.of 'b')\n");
+  console.log("    0 - reset parameters to defaults, and freeze at start\n");
+  console.log("    - - slow down the animation \n");
+  console.log("    = - speed up the animation \n"); 
+ 
+  console.log("\n\n   scene movement parameters\n");
+  console.log("    d - shift down 10 per cent (opp. of 'u')\n");
+  console.log("    u - shift up 10 per cent (opp. of 'd')\n");
+  console.log("    l - shift scene left 10 per cent (opp. of 'r')\n");
+  console.log("    r - shift scene right 10 per cent (opp. of 'l')\n");
+  console.log("    t - shift scene away by 10 per cent(opp. of 't')\n");
+  console.log("    v - shift away (opp. of 'w')\n");
+  console.log("    w - shift nearer (opp. of 'v')\n");
+ 
+  console.log("\n\n   scene rotation parameters\n");
+  console.log("    x - rotate 3 degrees about x (left - right) axis (opp. of '1')\n");
+  console.log("    y - rotate 3 degrees about y (vertical) axis (opp. of '2')\n");
+  console.log("    z - rotate 3 degrees about z (front - back) axis  (opp. of '3')\n");
+  console.log("    1 - rotate 10 degrees about x (right - left) axis (opp. of 'x')\n");
+  console.log("    2 - rotate 10 degrees about y (vertical) axis (opp. of 'y')\n");
+  console.log("    3 - rotate 10 degrees about z (back - front) axis  (opp. of 'z')\n"); 
+ 
+  console.log("\n\n   scene size parameters\n");
+  console.log("    g - grow scene by 10 per cent (opp. of 's')\n"); 
+  console.log("    s - shrink scene by 10 per cent (opp. of 'g')\n");
+ 
+  console.log("\n\n   polygon parameters\n");
+  console.log("    j - increase the number of polygons per sphere by 1 {opp. of 'k')\n"); 
+  console.log("    k - decrease the number of polygons per sphere by 1 {opp. of 'j')\n"); 
+ 
+  console.log("\n\n   shading parameters\n");
+  console.log("    4 - normal shading/modified shading (toggle)\n"); 
+  console.log("    6 - display shadows (toggle) - inoperative at present\n");
+  console.log("    8 - display footprints (toggle) - inoperative at present\n");
+ 
+  console.log("\n\n   annotation parameters\n");
+  console.log("    n - display of frame numbers (toggle)\n");
+  console.log("    o - display of bar numbers (toggle)\n");
+  console.log("    5 - display of time (toggle) - inoperative at present\n");
+ 
+  console.log("\n\n   avi output parameters\n");
+  console.log("    7 - save display as AVI file - inoperative at present\n");
+ 
+  console.log("\n\n   program usage parameters\n");
+  console.log("    h - show these instructions\n");
+  console.log("    q - quit\n");
+ 
+  console.log(" \n\n******* TO ACTIVATE THESE: CLICK IN THE ANIMATION WINDOW FIRST *******\n");
+} /* help */
+/********************************************/
+
+//void dopause(int t)
+var dopause = function(t)
+/*
+   pause for a while
+
+   called by  image, animate,
+*/
+{
+   var a//double;
+   var j,k;//int
+
+   a = 1.0;
+   for (j = 1; j < t*1000; ++j)
+   {
+      for (k = 1; k < 1000; ++k)
+      {
+         a += j/k;	//Both j and k were cast to double
+      }
+   }
+   if (a < 0.0) printf("%d\n",t);
+} /* dopause */
+/*****************************************/
+
+//void donum(int f)
+var donum = function(f)
+/*
+   draw bar and/or frame numbers 
+
+   called by image,
+*/
+{
+	//char nstr[BMAX];
+	var nstr = Array();
+	var b,c,nlngth;//int
+
+	if (bnums == TRUE)
+	{
+		b = int(doub1 + inv2 + (f/frperbar));	//TODO REVIEW (f and frperbar were cast to double)
+		nstr = "bar "+b;
+		nlngth = strlen(nstr);
+		glColor3f(0.9, 0.0, 0.9);
+		glRasterPos3f(0.05,0.95,0.999999);
+		for (c = 0; c < nlngth; c++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, nstr[c]);
+	}
+	if (fnums == TRUE)
+	{
+		nstr = "frame "+f;
+		nlngth = strlen(nstr);
+		glColor3f(0.9, 0.0, 0.9);
+		glRasterPos3f(0.05,0.05,0.999999);
+		for (c = 0; c < nlngth; c++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, nstr[c]);
+
+	  //pres_time = clock();
+	  //rate = CLOCKS_PER_SEC/(pres_time - prev_time);
+	  //prev_time = pres_time;
+	  //glRasterPos3f(0.9,0.05,0.999999);
+	  //printf("%d fr/sec  %d %d %d\n",
+		  //rate,pres_time,prev_time,CLOCKS_PER_SEC);
+	  //sprintf(nstr, "%d fr/sec",rate);
+	  //nlngth = strlen(nstr);
+	  //for (c = 0; c < nlngth; c++)
+         //glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, nstr[c]);
+	}
+} /* donum */
+/**********************************************************/
+
+//void ellmat(double r[3][3], int e, int f)
+var ellmat = function(r, e, f)
+/*
+   for ellipsoid 'e' in frame 'f' find its 
+   rotation matrix 'r',
+
+   called by  image,
+*/
+{
+	var p,cp,sp;//double
+	var x,y,z,m,xsp,ysp,zsp,xm,ym,zm,xym,xzm,yzm ;//double
+
+	p = qu3[f][e][0]*radian ;
+	x = qu3[f][e][1] ;
+	y = qu3[f][e][2] ;
+	z = qu3[f][e][3] ;
+	sp = sin(p);
+	cp = cos(p);
+	m = doub1-cp ;
+	xm = x*m ;
+	ym = y*m ;
+	zm = z*m ;
+	xsp = x*sp ;
+	ysp = y*sp ;
+	zsp = z*sp ;
+	xym = x*ym ;
+	xzm = x*zm ;
+	yzm = y*zm ;
+	r[0][0] = x*xm+cp ;
+	r[0][1] = xym+zsp ;
+	r[0][2] = xzm-ysp ;
+	r[1][0] = xym-zsp ;
+	r[1][1] = y*ym+cp ;
+	r[1][2] = yzm+xsp ;
+	r[2][0] = xzm+ysp ;
+	r[2][1] = yzm-xsp ;
+	r[2][2] = z*zm+cp ;
+} /* ellmat */
+/***********************************************/
+
+//void image(void) 
+var image = function() 
+/*
+   called by  main,
+   calls      donum, dopause, ellmat,
+*/
+{ 
+    var e,j,k;//int
+    var amb,shade,illum;//double
+    //double r[3][3];
+	var r = get2DArray();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    for (e = 1; e < nels[f]; ++e)
+    {
+		glPushMatrix();
+
+		// interactive parameters -
+
+		glScalef(doub1,doub1,inv10);
+		glScalef(scale,scale,scale);
+		glTranslatef(tx,ty,tz);
+		glTranslatef(inv2,inv2,inv2);
+		glRotatef(anglez,0,0,1);
+		glRotatef(angley,0,1,0);
+		glRotatef(anglex,1,0,0);
+         
+		// ellipsoid parameters -
+
+		glTranslatef(ce3[f][e][0], ce3[f][e][1], ce3[f][e][2]);
+		glRotatef(qu3[f][e][0], qu3[f][e][1], qu3[f][e][2], qu3[f][e][3]);
+		glScalef(ax3[f][e][0], ax3[f][e][1], ax3[f][e][2]);
+		ellmat(r,e,f);
+		glPolygonMode(GL_FRONT, GL_FILL);
+		glBegin(GL_QUADS);
+		amb = 0.7;
+		for (j = 0; j < nfaces; ++j)
+		{
+            illum = doub0;
+            for (k = 0; k < 3; ++k)
+                illum += r[k][1]*norm[j][k];
+            shade = amb + (doub1 - amb)*illum;
+            glColor3f(shade*co3[f][e][0], shade*co3[f][e][1], shade*co3[f][e][2]);
+            for (k = 0; k < 4; ++k)
+            {
+				glVertex3f(sph[j][k][0],sph[j][k][1],sph[j][k][2]);
+            } /* k  vertices */
+		} /* j faces */
+		glEnd();
+		glPopMatrix();
+    } /* e ellipsoids */
+    if ((fnums == TRUE)||(bnums == TRUE)) donum(f);
+    glutSwapBuffers();
+    glFlush();
+    if (slow < 0) slow = 0;
+    if (slow > 0) dopause(slow);
+} /* image */
+/***************************************/
+
+//void animate(void)
+var animate = function()
+/*
+   called by  main,
+   calls      dopause,
+*/
+{
+    if (freeze == TRUE)
+    {
+		if (single == TODO)
+		{
+            if (forward == TRUE)
+				df = 1;
+            else
+				df = -1;
+		}
+		else
+            df = 0;
+    }
+    else
+    if (forward == TRUE)
+		df = 1;
+    else
+        df = -1;
+    f += df;
+    if (f < 1) f = fstop-1;
+    if (f >= fstop) f = fstart+1;
+    if (((f == (fstart+2)) || (f == (fstart+1))) && (pause == TRUE))
+        dopause(100);
+    anglex += dangx; 
+    angley += dangy;
+    anglez += dangz;
+    if (anglex < -doub180) anglex += doub360;
+    if (anglex > doub180) anglex -= doub360;
+    if (angley < -doub180) angley += doub360;
+    if (angley > doub180) angley -= doub360;
+    if (anglez < -doub180) anglez += doub360;
+    if (anglez > doub180) anglez -= doub360;
+    dangx = doub0;
+    dangy = doub0;
+    dangz = doub0;
+    glutPostRedisplay();
+    single = DONE;
+} /* animate */
+/***************************************/
+
+//void checkeys(unsigned char key, int x, int y) 
+var checkeys = function(key, x, y) 
+/*
+   called by  main,
+   calls      initsphere,
+*/
+{ 
+	if ((key == GLUT_KEY_ESCAPE) || (key == 'q'))
+	{
+		getout(0);
+		if (ok == 1) _tmain(0,junk);
+	}
+	if (key == 'h') help();
+	if (key == 'j')
+	{
+		nsph +=1;
+		console.log("'j' more facets "+nsph+" (opp. 'k')\n");
+		console.log("checkeysa "+key+"\n");
+		initsphere();
+		if (ok == 1) _tmain(0,junk);
+	}
+	if (key == 'k')
+	{
+		nsph -=1;
+		console.log("'k' fewer facets "+nsph+" (opp. 'j')\n");
+		console.log("checkeysb "+key+"\n");
+		initsphere();
+		if (ok == 1)  _tmain(0,junk);
+	}
+	if (key == 'a') 
+	{
+		df = 1;
+		console.log("'a' animate (opp. 'i')\n");
+		if (forward == FALSE) df = -1;
+		freeze = FALSE;
+	}
+	if (key == 'i') 
+	{ 
+		freeze = TRUE; 
+		console.log("'i' freeze (opp. 'a')\n");
+	}
+	if (key == 'f')
+	{
+		if (freeze == TRUE) single = TODO;
+		console.log("'f' forwards (opp. 'b')\n");
+		forward = TRUE;
+	}
+	if (key == 'b') 
+	{
+		if (freeze == TRUE) single = TODO;
+		console.log("'b' backwards (opp. 'f')\n");
+		forward = FALSE; 
+	}
+	if (key == 'p') { pause = TRUE; printf("'p' pause on first and last frames (opp. 'c')\n"); }
+	if (key == 'c') { pause = FALSE; printf("'c' continuous looping (opp. 'p')\n"); }
+	if (key == 'g') { scale *= 1.1; printf("'g' grow %f (opp.'s')\n", scale); }
+	if (key == 's') { scale /= 1.1; printf("'s' shrink %f (opp. 'g')\n", scale); }
+	if (key == 'l') { tx -= 0.1; printf("'l' shift left %f (opp. 'r')\n", tx); }
+	if (key == 'r') { tx += 0.1; printf("'r' shift right %f (opp. 'l')\n", tx); }
+	if (key == 'd') { ty -= 0.1; printf("'d' shift down %f (opp. 'u')\n", ty); }
+	if (key == 'u') { ty += 0.1; printf("'u' shift up %f (opp. 'd')\n", ty); }
+	if (key == 'v') { tz -= 0.1; printf("'v' shift in %f (opp. 'w')\n", tz); }
+	if (key == 'w') { tz += 0.1; printf("'w' shift away %f (opp. 'v')\n", tz); }
+	if (key == 'x') { dangx = alpha; printf("'x' rotate x %f (opp. '1')\n", anglex); }
+	if (key == '1') { dangx = -alpha; printf("'1' rotate x %f (opp. 'x')\n", anglex); }
+	if (key == 'y') { dangy = alpha; printf("'y' rotate y %f (opp. '2')\n", angley); }
+	if (key == '2') { dangy = -alpha; printf("'2' rotate y %f (opp. 'y')\n", angley); }
+	if (key == 'z') { dangz = alpha; printf("'z' rotate z %f (opp. '3')\n", anglez); }
+	if (key == '3') { dangz = -alpha; printf("'3' rotate z %f (opp. 'z')\n", anglez); }
+	if (key == '-') { slow += 2; printf("'-' slower %d (opp. '=')\n", slow); }
+	if (key == '=') { slow -= 2; printf("'=' faster %d (opp. '-')\n", slow); }
+	if (key == 'n')
+	{ 
+		if (fnums == TRUE)
+		{
+			fnums = FALSE;
+			console.log("'n' hide frame numbers (toggle)\n");
+		}
+		else
+		{
+			fnums = TRUE;
+			console.log("'n' show frame numbers (toggle)\n");
+		}
+	}
+	if (key == 'o')
+	{ 
+		if (bnums == TRUE)
+		{
+			bnums = FALSE;
+			console.log("'n' hide bar numbers (toggle)\n");
+		}
+		else
+		{
+			bnums = TRUE;
+			console.log("'n' show bar numbers (toggle)\n");
+		}
+	}
+	if (key == '0') 
+	{
+		console.log("'0' reset parameters and freeze at frame 1\n");
+		f = fstart+1;
+		freeze = TRUE;
+		forward = TRUE;
+		df = 1;
+		scale = SCALE;
+		tx = doub0;
+		ty = doub0;
+		tz = doub0;
+		anglex = doub0;
+		angley = doub0;
+		anglez = doub0;
+		slow = 1;
+		nsph = SSTART;
+	} /* key = '0' */
+} /* checkeys */
+/***************************************/
+
+//TODO ERRORAGE FILE *test_File won't work
+//void add_id_num ( char name[], char outname[], char ext[] )
+var add_id_num = function ( name, outname, ext )
+{
+	FILE *test_File;
+	var j;//int
+
+	for ( j = 0; j <= 999; j++ )
+	{
+		sprintf ( outname, "%s_%03d%s", name, j, ext );
+
+		if ( ( test_File = fopen ( outname, "r" ) ) != NULL )
+		{
+			fclose ( test_File );
+		}
+		else
+		{
+			return;
+		}
+	}
+	outname = name + "_000" + ext;
+} /* add_id_num */
+/*******************************************/
+
+//int find_ini_title ( char title[] )
+var find_ini_title = function( title )
+/*
+   called by get_ini_str, get_ini_bool, 
+	          get_ini_char,
+*/
+{
+	var value = -1;//int
+	var ini_no;//int
+	var j;//int
+	var plen;//int
+	var iplen;//int
+	
+	if ( number_ini <= 0 ) return( NULL );
+	for ( ini_no = 0; ini_no < number_ini; ini_no++ )
+	{
+		plen = parseInt(strlen ( title ));//TODO REVIEW (was cast to int)
+		iplen = 0;
+		for ( j = 0; j < plen; j++ )
+		{
+			if ( title[j] == ini_title[ini_no][j] )
+			{
+				iplen = iplen + 1;
+			}
+		}
+		if ( iplen == plen )
+		{
+			return( ini_no );
+		}
+	}
+	return( value );
+} /* find_ini_title */
+/************************************************/
+
+//void get_ini_dump ( void )
+var get_ini_dump = function()
+{
+	var ini_no;//int
+	
+	console.log("  number ini "+number_ini+"\n");
+	if ( number_ini <= 0 ) return;
+	for ( ini_no = 0; ini_no < number_ini; ini_no++ )
+	{
+		console.log(" ini_no "+leadingZeros(ini_no, 2)+" title "+ini_title[ini_no][0]+" value "+ini_value[ini_no][0]+"\n");	//ini_title and ini_value had & symbols next to them.
+	}
+} /* get_ini_dump */
+/************************************************/
+
+//bool get_if_ini ( void )
+var get_if_ini = function()
+{
+	if ( number_ini > 0 ) return( true );
+	return( false );
+} /* get_if_ini */
+/************************************************/
+
+//bool get_ini_bool ( char title[] )
+var get_ini_bool = function(title)
+{
+	var value;//bool
+	var ini_no;//int
+	value = -1;NULL;
+	if ( number_ini <= 0 ) return( NULL );
+	ini_no = find_ini_title ( title );
+	if ( ini_no < 0 ) return( NULL );
+	if ( toupper( ini_value[ini_no][0] ) == 'T' )
+		return( true );
+	if ( toupper( ini_value[ini_no][0] ) == 'F' )
+		return( false );
+	return( NULL );
+
+} /* get_ini_bool */
+/************************************************/
+
+//char* get_ini_char ( char title[] )
+var get_ini_char = function( title )
+/*
+   calls find_ini_title, ini_value
+*/
+{
+	var value;//char*
+	var ini_no;//int
+	value = NULL;
+	if ( number_ini <= 0 ) return( NULL );
+	ini_no = find_ini_title ( title );
+	if ( ini_no < 0 ) return( NULL );
+	return( ini_value[ini_no][0] );//TODO REVIEW (ini_value had &)
+
+} /* get_ini_char */
+/************************************************/
+
+//int get_ini_int ( char title[] )
+var get_ini_int = function( title )
+/*
+   calls find_ini_title, ini_value
+*/
+{
+	var value = 0;//int
+	var ini_no;//int
+	if ( number_ini <= 0 ) return( NULL );
+	ini_no = find_ini_title ( title );
+	if ( ini_no < 0 ) return( NULL );
+	value = atoi ( ini_value[ini_no][0] );//TODO REVIEW (ini_value had &)
+	//printf ( " ini_no %d value %d\n", ini_no, value );
+	return( value );
+
+} /* get_ini_int */
+/************************************************/
+
+//float get_ini_float ( char title[] )
+var get_ini_float = function( title )
+/*
+   calls find_ini_title, ini_value
+*/
+{
+	var value = 0.0;//float	//TODO REVIEW (was 0.0f)
+	var ini_no;//int
+	if ( number_ini <= 0 ) return( NULL );
+	ini_no = find_ini_title ( title );
+	if ( ini_no < 0 ) return( NULL );
+	value = atof ( ini_value[ini_no][0] );	//TODO REVIEW (ini_value has &)
+	return( value );
+} /* get_ini_float */
+/************************************************/
+
+//double get_ini_double ( char title[] )
+var get_ini_double = function( title )
+/*
+   calls find_ini_title, ini_value
+*/
+{
+	var value = 0.0;//double
+	var ini_no;//int
+	if ( number_ini <= 0 ) return( NULL );
+	ini_no = find_ini_title ( title );
+	if ( ini_no < 0 ) return( NULL );
+	value = strtod ( ini_value[ini_no][0], NULL );//TODO REVIEW (ini_value had &)
+	return( value );
+} /* get_ini_double */
+/************************************************/
+
+//bool get_ini_str ( char title[], char value[] )
+var get_ini_str = function(title, value)
+/*
+   calls find_ini_title, ini_value
+*/
+{
+	//char* value;
+	var ini_no;//int
+	var i;//int
+	var len;//int
+
+	value[0] = NULL;
+	if ( number_ini <= 0 ) return( false );
+	ini_no = find_ini_title ( title );
+	if ( ini_no < 0 ) return( false );
+	len = parseInt(strlen( ini_value[ini_no][0] ));//TODO REVIEW (ini_value had &; strlen was cast to int)
+	if ( len <= 0 )  return( false );
+	i = -1;
+	do
+	{
+		i = i + 1;
+		value[i] = ini_value[ini_no][i];		
+	} while ( ini_value[ini_no][i] != NULL );
+
+	return( true );
+
+} /* get_ini_str */
+/************************************************/
+
+//TODO ERRORAGE (will not work with the FILE* pointer)
+//void get_ini ( int dump )
+var get_ini = function( dump )
+/*
+   open  and decode .ini file
+
+   called by main,
+*/
+{
+	FILE *ini_file_unit;
+	var ini_no;//int
+	var j;//int
+	var k;//int
+	var len;//int
+	var loc_comma;//int
+	var loc_semi;//int
+	var asterisk = '*';	//chat
+	var blank = ' ';	//chat
+	var comma = ',';	//chat
+	var semi = ';';	//chat
+	var getout;//bool
+
+	for ( ini_no = 0; ini_no < max_ini; ini_no++ )
+	{
+		ini_title[ini_no][0] = NULL;
+		ini_value[ini_no][0] = NULL;
+	}
+
+	number_ini = -1;
+	ini_diag = 0;
+	ini_file_unit = NULL;
+
+	// open ini file - check if it exists
+
+	if ( ( ini_file_unit = fopen ( "lintel.ini", "r" ) ) == NULL )
+	{
+		if ( ini_file_unit ) fclose ( ini_file_unit );
+		console.log( "\n\n    lintel.ini not available - will continue\n\n");
+	}
+	else
+	{
+		ini_no = 0;
+		number_ini = ini_no;
+		len = -1;
+		do
+		{
+			ini_title[ini_no][0] = NULL;
+			ini_value[ini_no][0] = NULL;
+
+			if ( fgets ( buf, BMAX, ini_file_unit ) != NULL )
+			{
+				if ( ini_diag >= 1 )
+					console.log(" ini_no "+leadingZeros(ini_no, 2)+" buf "+buf+"");
+				if ( buf[0] != asterisk )
+				{
+					if ( ini_diag >= 1 )
+						console.log(" ini_no "+leadingZeros(ini_no, 2)+" buf "+buf+"");
+					loc_comma = -1;
+					loc_semi = -1;
+					getout = false;
+					len = parseInt(strlen( buf ));	//TODO REVIEW (Was cast to int)
+					if ( ini_diag >= 1 ) printf ( " len %d\n", len );
+					for ( j = 0; j < len; j++ )
+					{
+						if ( buf[j] == comma && loc_semi == -1 ) loc_comma = j;
+						if ( buf[j] == semi  )
+						{
+							loc_semi = j;
+							getout = true;
+						}
+						if ( getout == true ) break;
+					}
+					if ( ini_diag >= 1 )
+						console.log(" loc_comma "+loc_comma+" loc_semi "+loc_semi+"\n");
+
+					// get parameter title
+
+					k = 0;
+					for ( j = 0; j < loc_comma; j++ )
+					{
+						if ( buf[j] != blank )
+						{
+							ini_title[ini_no][k] = buf[j];
+							k = k + 1;
+						}
+
+					}
+					ini_title[ini_no][k] = NULL;
+
+					// get parameter value
+
+					k = 0;
+					for ( j = loc_comma + 1; j < loc_semi; j++ )
+					{
+						if ( buf[j] != blank )
+						{
+							ini_value[ini_no][k] = buf[j];
+							if ( ini_diag > 1 )
+							{
+								console.log(" j "+j+" k "+k+" buf[j] "+buf[j]+" ini "+ini_value[ini_no][k]+"\n");
+							}
+							k = k + 1;
+						}
+					}
+					ini_value[ini_no][k] = NULL;
+					ini_no = ini_no + 1;
+				}
+				else
+				{
+					if ( buf[1] == 'd' && buf[2] == 'u' 
+						&& buf[3] == 'm' && buf[4] == 'p' )
+						dump = 1;
+				}
+			}
+		}
+		while ( !feof( ini_file_unit ) && len != 0 );
+		number_ini = ini_no;
+	}
+	if ( dump == 1 ) get_ini_dump ();
+} /* get_ini */
+/************************************************/
+
+//bool strcmpend ( char str1[], char str2[] )
+var strcmpend = function( str1, str2 )
+/*
+	compare strings to see if str2 is included at end of str1
+*/
+{
+	var len1, len2;//int
+	var i1, i2;//int
+	var cnt;//int
+
+	len1 = parseInt(strlen( str1 ));//TODO REVIEW (was cast to int)
+	len2 = parseInt(strlen( str2 ));//TODO REVIEW (was cast to int)
+
+	cnt = 0;
+	i2 = len2 - 1;
+	for ( i1 = len1 - 1; i1 >= len1 - len2; i1-- )
+	{
+		if ( str1[i1] == str2[i2] ) cnt = cnt + 1;
+		i2 = i2 - 1;
+	}
+	if ( cnt == len2 )		return( true );
+
+	return( false );
+}/* strcmpend */
+
+//void get_filesa ( bool lbn_type, int error )
+var get_filesa = function( lbn_type, error )
+{
+	console.log( "\n" );
+	if ( error == 0 )
+	{
+		console.log( "    Please type input filename followed by pressing the 'enter' key\n\n" );
+	}
+	else
+	{
+		console.log( "\n" );
+		console.log( "    Please type a correct input filename\n\n" );
+	}
+
+	if ( lbn_type == true )
+	{
+		console.log( "      NUDES file (xxx.nud or xxx.n)\n" );
+		console.log( "        - full filename (xxx.nud or xxx.n)\n" );
+		console.log( "      LBN file (yyy.lbn)\n" );
+		console.log( "        - root portion (yyy) of filename\n" );
+		console.log( "           (interprets staves 1 and 2 with figure tracking)\n" );
+		console.log( "        - full filename (yyy.lbn)\n" );
+		console.log( "           (choice of staves, choice of tracking)\n\n" );
+		console.log( "    Filename:  " );
+	}
 
 
+	if ( lbn_type == false )
+	{
+		console.log( "    Filename:  " );
+	}
+} /* get_filesa */
+/************************************************/
+
+//void get_files ( char file[] )
+var get_files = function( file )
+/*
+   called by main
+	calls get_filesa, strcmpend, bell, add_id_num,
+*/
+{
+	var c;//int
+	var i;//int
+	var len;//int
+	var last;//int
+	var err_count;//int
+	var error;//int
+	var loc_dot;//int
+	var from_ini;//int
+	var key;//char
+	var get_out;//bool
+	var ini_ok;//bool
+	var file_ok;//bool
+	var dir_ok;//bool
+	var lbn_type;//bool
+	//char dir[BMAX];
+	dir = Array();
+
+	from_ini = 0;
+	err_count = 0;
+	error = 0;
+	get_out = false;
+	ini_ok = false;
+	file_ok = false;
+	dir_ok = false;
+	lbn_type = true;
+
+	var again = true;
+	while(again){
+		again = false;
+		err_count = err_count + 1;
+		if ( err_count >= 25 ) 
+		{
+			printf( " Limit: tried %d times for input file %s\n",
+				err_count,name );
+			ok = -1;
+			return;
+		}
+		input_file_type = -1;
+		for ( c = 0; c < BMAX; ++c )
+		{
+			name[c] = NULL;
+			finname[c] = NULL;
+			nudesname[c] = NULL;
+		}
+
+		if ( file == NULL )
+		{
+			file_ok = false;
+			if ( from_ini == 0 )
+			{
+				if ( get_if_ini () == true )
+				{
+					ini_ok = get_ini_bool ( "input_file_default" );
+					if ( ini_ok == true ) 
+					{
+						file_ok = get_ini_str ( "input_file_name", name );
+						dir_ok = get_ini_str ( "input_file_dir", dir );
+						if ( dir[0] == NULL ) dir_ok = false;
+						len = parseInt(strlen( dir ));	//TODO REVIEW (Was cast to int)
+						if ( dir_ok == true && dir[len - 1] != '\\' )
+							dir[len - 1] = '\\';
+						lbn_type = get_ini_bool ( "lbn_file_encoded" );
+						from_ini = 1;
+					}
+				}
+			}
+
+			if ( file_ok == false )
+			{
+				name[0] = NULL;
+				get_filesa ( lbn_type, error );
+				if ( gets ( name ) != NULL )
+				{
+					len = parseInt(strlen( name ));	//TODO REVIEW (Was cast to int)
+					if ( len == 0 )
+					{
+						get_out = true;
+						error = 1;
+						again = true;
+						continue;
+					}
+				}
+				else
+				{
+					get_out = true;
+					error = 1;
+					again = true;
+					continue;
+				}
+			}
+		}
+		else
+		{
+			strcpy ( name, file );
+		}
+
+		len = parseInt(strlen( name )); //TODO REVIEW (was cast to int)
+		last = len - 1;
+
+		loc_dot = -1;
+		i = -1;
+		do
+		{
+			i = i + 1;
+			key = name[i];
+			if ( key == '.' ) loc_dot = i;
+		} while ( key != NULL );
+
+		if ( loc_dot >= 0 ) loc_dot = last - loc_dot;
+
+		input_file_type = -1;
+		haslbn = FALSE;
+		get_out = false;
+
+		if ( lbn_type == true ) // use filename to decide lbn type
+		{
+			switch ( loc_dot )
+			{
+			case 3:
+				// .nud extention
+				if ( strcmpend ( name, ".nud" ) ) 
+				{
+					input_file_type = 0;
+					haslbn = FALSE;
+				}
+				// .lbn extention
+				if ( strcmpend ( name, ".lbn" ) )
+				{
+					input_file_type = 1;
+					haslbn = TRUE;
+				}
+				if ( input_file_type < 0 ) get_out = true;
+				break;
+			case 2:
+				// problem
+				get_out = true;
+				break;
+			case 1:
+				// .n extention
+				if ( strcmpend ( name, ".n" ) )
+				{
+					input_file_type = 0;
+					haslbn = FALSE;
+				}
+				else
+				{
+					get_out = true;
+				}
+				break;
+			case 0:
+				// . extention
+				if ( strcmpend ( name, "." ) )
+				{
+					input_file_type = 2;
+					strcat( name, "lbn" );
+					haslbn = TRUE;
+				}
+				else
+				{
+					get_out = true;
+				}
+				break;
+			case -1:
+				// no extention
+				if ( len > 0 && !strcmpend ( name, "." ) )
+				{
+					input_file_type = 2;
+					strcat( name, ".lbn" );
+					haslbn = TRUE;
+				}
+				else
+				{
+					get_out = true;
+				}
+				break;
+			default:
+				get_out = true;
+				break;
+			}
+		}
+		if ( get_out == true )
+		{
+			if ( from_ini == 1 ) 
+			{
+				console.log("\n\nFile: "+name+" from lintel.ini is not available.\n");
+				from_ini = -1;
+			}
+			error = 1;
+			name[0] = NULL;
+			again = true;
+			continue;
+		}
+
+		// add directory to filename
+		if ( dir_ok == true )
+		{
+			strcat ( dir, name );
+			strcpy ( name, dir );
+		}
+		console.log("\n    ");
+		if ( input_file_type == 0 )
+		{
+			sprintf ( nudesname, "%s", name );
+			if ( ( infile = fopen( nudesname, "r" ) ) == NULL )
+			{
+				if ( infile ) fclose ( infile );
+				console.log("\n\n "+nudesname+" OOPS?\n");
+				bell ( 1, 1 );
+				if ( from_ini == 1 ) 
+				{
+					from_ini = -1;
+				}
+				again = true;
+				continue;
+			}
+			console.log("  Opened "+nudesname+"\n");
+		}
+		else if ( input_file_type > 0 )
+		{
+			strcpy( finname, name );
+
+			if ( ( infile = fopen ( finname, "r" ) ) == NULL )
+			{
+				if ( infile ) fclose ( infile );
+				console.log("\n   "+finname+" ?  OOPS - file not found.\n");
+				bell ( 1, 1 );
+				if ( from_ini == 1 ) 
+				{
+					console.log("\n\n    File: "+name+" from lintel.ini is not available.\n");
+					from_ini = -1;
+				}
+				again = true;
+				continue;
+			}
+
+			console.log("\n   opened input file "+finname+"\n");
+
+			add_id_num ( name, nudesname, ".n" );
+			if ( ( nudesfile = fopen ( nudesname, "w" ) ) == NULL )
+			{
+				if ( nudesfile ) fclose ( nudesfile );
+				console.log("\n\n "+nudesname+" OOPS?\n");
+				bell ( 1, 1 );
+				again = true;
+				continue;
+			}
+			console.log("\n   created nudes file "+nudesname+"\n");
+		}
+		if ( ( infile = fopen(nudesname, "r" ) ) == NULL )
+		{
+			if ( infile ) fclose ( infile );
+			console.log("\n\n "+nudesname+" OOPS?\n");
+			bell ( 1, 1 );
+			again = true;
+			continue;
+		}
+	}
+} /* get_files */
+/************************************************/
+
+//bool led_opena ( int min_fps, int max_fps, int min_beats, int max_beats )
+var led_opena = function( min_fps, max_fps, min_beats, max_beats )
+{
+	var get_out;//bool
+	get_out = true;
+	if ( lbn_fps < min_fps || lbn_fps > max_fps )
+	{
+		console.log("\n   Oops: fps value is "+lbn_fps+" but must be between "+min_fps+" and "+max_fps+"\n");
+		get_out = false;
+	}
+	if ( lbn_bpm < min_beats || lbn_bpm > max_beats )
+	{
+		if ( lbn_bpm < 0 )
+		{
+			console.log("\n   Oops: bpm value missing\n");
+		}
+		else
+		{
+			console.log("\n   Oops: bpm value is "+lbn_bpm+" but must be between "+min_beats+" and "+max_beats+"\n");
+		}
+		get_out = false;
+	}
+	return( get_out );
+} /* led_opena */
+/********************************************/
+
+//void led_param ( void )
+var led_param = function()
+/*
+   set up parameters of .lbn interpretation from .ini file
+
+   called by main
+*/
+{
+	var get_out;//bool
+	var min_fps;//int
+	var max_fps;//int
+	var min_beats;//int
+	var max_beats;//int
+	var lbn_figures_in;//int
+	var lbn_default;//bool
+	var lbn_fps_in;//int
+	var lbn_bpm_in;//int
+
+	lbn_fps = -1;
+	lbn_bpm = -1;
+	lbn_ppb = 23;
+	min_fps = 1;
+	max_fps = 250;
+	min_beats = 25;
+	max_beats = 250;	
+	lbn_default = false;
+	lbn_figures = 1;
+	if ( get_if_ini () == true )
+	{
+		lbn_figures_in = get_ini_int ( "lbn_figures" );
+		lbn_default = get_ini_bool ( "lbn_default" );
+		lbn_fps_in = get_ini_int ( "lbn_fps" );
+		lbn_bpm_in = get_ini_int ( "lbn_bpm" );
+
+		if ( lbn_fps_in < min_fps || lbn_fps_in > max_fps 
+			|| lbn_bpm_in < min_beats || lbn_bpm_in > max_beats )
+				lbn_default = false;
+		if ( lbn_default == true )
+		{
+			lbn_fps = lbn_fps_in;
+			lbn_bpm = lbn_bpm_in;
+			lbn_figures = lbn_figures_in;
+		}
+	}
+
+	if ( lbn_default == false )
+	{
+		get_out = false;
+		do
+		{
+			console.log("\n   Please enter frames/second ("+min_fps+"-"+max_fps+")");
+			console.log("\n            and beats/minute ("+min_beats+"-"+max_beats+")");
+			console.log("\n            separated by a space\n   :");
+			if ( gets ( buf ) != NULL && buf[0] != 0 )
+			{
+				buf = ""+lbn_fps+" "+lbn_bpm+"";//TODO REVIEW (lbn_fps and lbn_bpm both had &)
+				get_out = led_opena ( min_fps, max_fps, min_beats, max_beats);
+			}
+			else
+			{
+				lbn_fps = 25;
+				lbn_bpm = 120;
+				console.log("\n   Oops: cannot read fps and bpm");
+				console.log("\n   values set to "+lbn_fps+" and "+lbn_bpm+" respectively\n");
+				get_out = true;
+			}
+		} while ( get_out == false );
+	}
+	lbn_fpp = lbn_fps*doub60 / lbn_bpm*lbn_ppb;//TODO REVIEW (All except doub60 were cast to double)
+	
+	console.log("\n   frames/pixel "+lbn_fpp+", fps "+lbn_fps+", bpm "+lbn_bpm+", ppb "+lbn_ppb+"\n");
+	
+	console.log("   number of figures "+lbn_figures+"\n");
+}/* led_param */
+/************************************************/
+
+//void initgraphics(void) 
+var initgraphics = function() 
+/*
+   called by  main,
+*/
+{ 
+   //char title[BMAX];
+   var title = Array();
+
+   title = ptitle + "  -  " + finname;
+   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB); 
+   glutInitWindowSize(width, height); 
+   glutInitWindowPosition(xw,yw); 
+   glutCreateWindow(title);
+/* run in full screen if WINDOW_MODE macro undefined */  
+//#ifndef WINDOW_MODE 
+//   glutFullScreen(); 	//TODO REVIEW (These three lines commented out due to error)
+//#endif 
+/* background color */ 
+   glClearColor(1.0, 1.0, 1.0, 0.5); 
+
+/* init viewing matrix */ 
+   glMatrixMode(GL_PROJECTION); 
+   glLoadIdentity(); 
+   glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0); 
+   glEnable(GL_DEPTH_TEST);
+} /* initgraphics */
+/***************************************/ 
+
+//int _tmain(int argc, _TCHAR* argv[])
+var _tmain = function(argc, argv)
+/*
+   calls initialise, lgetfiles, linter, openfile, compl,
+         doframes, initsphere, initgraphics,
+         checkeys, image, animate, getout,
+         help, gluInit, glutKeyboardFunc, glutDisplayFunc,
+         glutIdleFunc, glutMainLoop,
+			get_ini, get_files, led_param
+*/
+{
+	ptitle = "lintel084";
+	console.log("\n   "+ptitle+" running\n");
+
+	var more = true;
+	while(more){
+		more = false;
+		initialise();
+		get_ini ( 0 );
+		led_param();
+		get_files ( NULL );
+		if ( ok != 0 ){
+			more = true;
+			continue;
+		}
+		if (haslbn == TRUE)
+		{
+			 output += "*\n* created "+nudesname+" from "+name+" using "+ptitle+"\n*\n";
+			 linter();
+		}
+		fstart = 0;
+		if (ok == 0) openfile(); 
+		   else 
+			  if (ok != 1) getout(1);
+				 else 
+				 {
+					more = true;
+					continue;
+				}
+		compl();
+		if (ok == 0) doframes();
+		   else 
+			  if (ok != 1) getout(1);
+				 else{
+						more = true;
+						continue;
+					}
+		if (ok == 0)
+		  initsphere();
+		   else 
+			  if (ok != 1) getout(1);
+				 else{
+						more = true;
+						continue;
+					}
+		glutInit(argc, argv); //TODO REVIEW (argc had &)
+		initgraphics(); 
+		console.log("For interactive command list:\n");
+		console.log("    click in animation window, then press 'h' key\n");
+		glutKeyboardFunc(checkeys); // register Keyboard handler 
+		glutDisplayFunc(image);     // register Display handler  
+		glutIdleFunc(animate);
+		glutMainLoop();
+
+		more = true;
+		continue;
+	}
+}
+//END PORT ON 2013-12-11 (Errorage)
 
 
 
